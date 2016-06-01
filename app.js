@@ -18,6 +18,7 @@ var fs = require('fs');
 var app = express();
 
 var nameMap = {};
+var PORT = 3000;
 
 
 app.use(bodyParser.json());
@@ -35,8 +36,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'node_modules')));
 app.use(express.static(path.join(__dirname, 'gltf')));
 
-app.use('/', routes);
-app.use('/users', users);
+/*app.use('/', routes);
+app.use('/users', users);*/
 
 app.post('/upload', multer({ dest: './ifc/'}).single('upl'), (req,res) => {
  	console.log(req.file); //form files
@@ -54,7 +55,7 @@ app.post('/upload', multer({ dest: './ifc/'}).single('upl'), (req,res) => {
   res.status(204).end();
 });
 
-app.get('/models', (req, res, next) => {
+app.get('/', (req, res, next) => {
   fs.readdir("./gltf", (err, items) => {
       console.log(items);
       var gltfs = items.filter((item) => { return item.indexOf(".gltf") > 0});
@@ -145,8 +146,8 @@ watchr.watch({
     }
 });
 
-app.listen(3000, () => {
-  console.log('Example app listening on port 48200!');
+app.listen(PORT, () => {
+  console.log('Example app listening on port '+PORT+'!');
 });
 
 module.exports = app;

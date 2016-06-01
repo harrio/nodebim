@@ -1,7 +1,9 @@
 # nodebim
 
-npm install
-node app.js
-localhost:3000 upload ifc
-localhost:3000/models view model
-profit
+## Usage
+```bash
+$ npm install
+$ node app.js
+```
+
+The application runs on `localhost:3000`
