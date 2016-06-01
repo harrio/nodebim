@@ -1,9 +1,87 @@
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+  transition: all 1.2s ease 0s;
+}
+
 body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
-  background-color: #000000;
+  font: 14px 'Roboto', "Lucida Grande", Helvetica, Arial, sans-serif;
+  background-color: #333333;
+  margin: 0;
+  padding: 0;
 }
 
 a {
   color: #00B7FF;
+}
+
+h1, h2, h3, h4, h5, h6, p {
+  color: #6464fb;
+}
+
+header {
+  padding: 10px;
+}
+
+h1 {
+  font-size: 3em;
+  text-align: center;
+}
+
+.right {
+  float: right;
+}
+
+input[type=submit],
+.button,
+.button:visited {
+  background-color: #333333;
+  color: #00B7FF;
+  padding: 5px 10px;
+  border: 1px solid;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+input[type=submit]:hover,
+input[type=submit]:active,
+.button:hover,
+.button:active {
+  background-color: #00B7FF;
+  color: #333333;
+}
+
+
+
+/* scaffold */
+.content-main {
+  display: inline-block;
+  vertical-align: top;
+  width: 75%;
+}
+
+.content-side {
+  display: inline-block;
+  vertical-align: top;
+  width: 25%;
+}
+
+.upload-form {
+  border: 1px solid #00B7FF;
+  margin-top: -1px;
+  padding: 10px;
+  width: 100%;
+}
+
+.loaded-models {
+  margin-top: 20px;
+}
+
+.model-item {
+  display: inline-block;
+  margin: 0;
+  padding: 0 5px;
+  width: 100%;
 }

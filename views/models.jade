@@ -1,11 +1,24 @@
 extends layout
 
 block content
-  a(href="/") Upload
+  section.content-side
+    header
+      h1 vrBIMbo
+      button.button(onClick="showUpload()") Upload new model
 
-  select(id="modelselect", name="modelselect")
-    for item in models
-      option #{item}
-  button(onclick="selectModel()") Load
+      div.upload-form(style='display:none;')
+        form(method="post",enctype="multipart/form-data",action="/upload")
+          p
+            input(type="file",name="upl")
+          p
+            input(type="submit",onClick="hideUpload()")
 
-  div(id="viewport")
+    div.loaded-models
+      for item in models
+        div.model-item
+          p
+            span= item
+            span.button.right(onclick="loadModel('#{item}')") Load and view
+
+  section.content-main
+    div(id="viewport")

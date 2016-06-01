@@ -79,7 +79,7 @@ function init() {
 }
 
 function setCrosshairColor(hex) {
-  crosshair.material = 
+  crosshair.material =
     new THREE.MeshBasicMaterial( {
             color: hex,
             opacity: 0.8,
@@ -101,6 +101,17 @@ function addBeacons() {
 
   scene.add(beaconGroup);
 
+<<<<<<< HEAD
+  fooGroup = new THREE.Group();
+
+  fooGroup.add(cube(10,3,10));
+  fooGroup.add(cube(18,3,18));
+  fooGroup.add(cube(10,10,10));
+  fooGroup.add(cube(0,3,26));
+
+  //scene.add(fooGroup);
+=======
+>>>>>>> upstream/master
 }
 
 function sphere(x,y,z) {
@@ -111,9 +122,9 @@ function sphere(x,y,z) {
             transparent: true
           } );
     var sphere = new THREE.Mesh( geometry, material );
-    sphere.position.x = x; 
-    sphere.position.z = z; 
-    sphere.position.y = y; 
+    sphere.position.x = x;
+    sphere.position.z = z;
+    sphere.position.y = y;
     material.depthTest = false;
     return sphere;
 }
@@ -180,7 +191,7 @@ function loadModel(name) {
       object.parent.matrixAutoUpdate = false;
       object.parent.rotationAutoUpdate = false;
 
-      renderCallback = function (scene, camera) { 
+      renderCallback = function (scene, camera) {
         THREE.glTFShaders.update(scene, camera);
       }
 
@@ -208,13 +219,12 @@ function animate(timestamp) {
   controls.update();
   //camera.updateMatrixWorld();
   //THREE.glTFAnimator.update();
-  
   render();
   if (bbox) {
     bbox.update();
   }
+
   manager.render(scene, camera, timestamp, renderCallback);
-  
 }
 
 function getIntersectedBeacon() {
@@ -231,8 +241,8 @@ function highlightBeacon(obj, boolean) {
 
 function render() {
   var obj = getIntersectedBeacon();
-	
-  if (!obj) { // clear previous highlight if any and reset timer if 
+
+  if (!obj) { // clear previous highlight if any and reset timer if
     if (INTERSECTED) {
       highlightBeacon(INTERSECTED, false);
       INTERSECTED.timestamp = undefined;
@@ -246,7 +256,7 @@ function render() {
        }
        // highlight crosshair and beacon and start stare timer
        setCrosshairColor(0x00ffff);
-			 INTERSECTED = obj; 
+			 INTERSECTED = obj;
        highlightBeacon(INTERSECTED, true);
        if (!INTERSECTED.timestamp) INTERSECTED.timestamp = Date.now();
 
@@ -263,9 +273,14 @@ function render() {
   var delta = 0.75 * clock.getDelta();
 }
 
-function selectModel() {
-  var name = document.getElementById("modelselect").value;
-  loadModel(name);
+function showUpload() {
+  var el = document.querySelectorAll('.upload-form')[0];
+  el.style.display = 'block';
+}
+
+function hideUpload() {
+  var el = document.querySelectorAll('.upload-form')[0];
+  el.style.display = 'none';
 }
 
 window.onload = function() {
