@@ -99,13 +99,10 @@ function addBeacons() {
 
   fooGroup.add(cube(10,3,10));
   fooGroup.add(cube(18,3,18));
-  fooGroup.add(cube(10,10,10));  
+  fooGroup.add(cube(10,10,10));
   fooGroup.add(cube(0,3,26));
 
   //scene.add(fooGroup);
-
-
-
 }
 
 function cube(x,y,z,size) {
@@ -215,7 +212,7 @@ function animate(timestamp) {
   controls.update();
   //camera.updateMatrixWorld();
   //THREE.glTFAnimator.update();
-  
+
   var hook;
   if (object) {
     hook = function (scene, camera) {
@@ -227,7 +224,7 @@ function animate(timestamp) {
     bbox.update();
   }
   manager.render(scene, camera, timestamp, hook);
-  
+
 }
 
 function render() {
@@ -252,9 +249,14 @@ function render() {
   var delta = 0.75 * clock.getDelta();
 }
 
-function selectModel() {
-  var name = document.getElementById("modelselect").value;
-  loadModel(name);
+function showUpload() {
+  var el = document.querySelectorAll('.upload-form')[0];
+  el.style.display = 'block';
+}
+
+function hideUpload() {
+  var el = document.querySelectorAll('.upload-form')[0];
+  el.style.display = 'none';
 }
 
 window.onload = function() {
