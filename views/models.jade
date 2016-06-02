@@ -4,7 +4,7 @@ block content
   section.content-side
     header
       h1 vrBIMbo
-      button.button(onClick="showUpload()") Upload new model
+      button.upload-btn.button(onClick="showUpload()") Upload new model
 
       div.upload-form(style='display:none;')
         form(method="post",enctype="multipart/form-data",action="/upload")
@@ -18,7 +18,7 @@ block content
         div.model-item
           p
             span= item
-            span.button.right(onclick="loadModel('#{item}')") Load and view
+            span.button(onclick="loadModel('#{item}')") Load and view
 
   section.content-main
     div(id="viewport")
