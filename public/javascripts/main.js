@@ -34,20 +34,9 @@ function init() {
 
   raycaster = new THREE.Raycaster();
 
-  // Lights
-
-  scene.add( new THREE.AmbientLight( 0xcccccc ) );
-
-  pointLight = new THREE.PointLight( 0xff4400, 5, 30 );
-  pointLight.position.set(0, 10, 0);
-  scene.add( pointLight );
-
-  // Renderer
-
   renderer = new THREE.WebGLRenderer({antialias:true});
   renderer.setPixelRatio( window.devicePixelRatio );
   //renderer.setSize( window.innerWidth, window.innerHeight );
-  //renderer.sortObjects = false;
   container.appendChild( renderer.domElement );
 
   controls = new THREE.VRControls(camera);
@@ -76,6 +65,7 @@ function init() {
   addBeacons();
   addSkybox();
   addGround();
+  addLights();
 
   window.addEventListener('resize', onWindowResize, true);
   window.addEventListener('vrdisplaypresentchange', onWindowResize, true);
@@ -132,73 +122,57 @@ function addSkybox() {
 		offset:		 { type: "f", value: 33 },
 		exponent:	 { type: "f", value: 0.6 }
 	};
-	//uniforms.topColor.value.copy( hemiLight.color );
-	//scene.fog.color.copy( uniforms.bottomColor.value );
 
   var skyGeo = new THREE.SphereGeometry( 4000, 32, 15 );
   var skyMat = new THREE.ShaderMaterial( { vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide } );
   var sky = new THREE.Mesh( skyGeo, skyMat );
   scene.add( sky );
-
-  // var skyGeo = new THREE.SphereGeometry(100, 25, 25);
-  // var material = new THREE.MeshPhongMaterial( {color: 0x00dfff} );
-  // var sky = new THREE.Mesh(skyGeo, material);
-  // sky.material.side = THREE.BackSide;
-  // scene.add(sky);
 }
 
 function addGround() {
   var geometry = new THREE.PlaneGeometry(100, 100);
-  var material = new THREE.MeshBasicMaterial( {color: 0x7cc000, side: THREE.DoubleSide} );
+  var material = new THREE.MeshLambertMaterial( {color: 0x7cc000, side: THREE.DoubleSide} );
   var plane = new THREE.Mesh( geometry, material );
   plane.rotation.x = Math.PI / 180 * 90;
+  //plane.receiveShadow = true;
   scene.add(plane);
+}
+
+function addLights() {
+  var hemiLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.7);
+  hemiLight.name = 'hemiLight';
+  scene.add(hemiLight);
+
+  var directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  directionalLight.position.set(50, 50, 50);
+
+  directionalLight.name = 'dirLight';
+  scene.add(directionalLight);
+}
+
+function addObject( geometry, materials) {
+  geometry.mergeVertices();
+	object = new THREE.Mesh( geometry, new THREE.MultiMaterial( materials ) );
+  object.rotation.x = -Math.PI/2;
+  scene.add( object );
 }
 
 function loadModel(name) {
   scene.remove(object);
-  var loader = new THREE.glTFLoader();
-  var url = name;
-  // load a resource
-  loader.load(
-    url,
-    function(obj) {
-      gltf = obj;
-      object = obj.scene;
+  var manager = new THREE.LoadingManager();
+  manager.onProgress = function (item, loaded, total) {
+	   console.log( item, loaded, total );
+  };
 
-      object.matrixAutoUpdate = false;
-      object.rotationAutoUpdate = false;
-
-      scene.add(object);
-      onWindowResize();
-
-      if (bbox) {
-        scene.remove(bbox);
-      }
-      bbox = new THREE.BoundingBoxHelper(object, 0xff0000);
-      bbox.update();
-      console.log("Y " + object.position.y + " ---> " + bbox.box.min.y);
-      object.position.y =- bbox.box.min.y;
-      //scene.add(bbox);
-
-      object.parent.matrixAutoUpdate = false;
-      object.parent.rotationAutoUpdate = false;
-
-      renderCallback = function (scene, camera) {
-        THREE.glTFShaders.update(scene, camera);
-      }
-
-    }
-  );
+  var loader = new THREE.JSONLoader(manager);
+    // load a resource
+		loader.load(
+		  name,
+      addObject
+	);
 }
 
 function onWindowResize( event ) {
-
-  // renderer.setSize( window.innerWidth, window.innerHeight );
-  //
-  // camera.aspect = window.innerWidth / window.innerHeight;
-  // camera.updateProjectionMatrix();
-
   camera.aspect = window.innerWidth / window.innerHeight;
   effect.setSize(window.innerWidth, window.innerHeight);
   camera.updateProjectionMatrix();
@@ -210,14 +184,12 @@ function animate(timestamp) {
   var delta = Math.min(timestamp - lastRender, 500);
   lastRender = timestamp;
   controls.update();
-  //camera.updateMatrixWorld();
-  //THREE.glTFAnimator.update();
   render();
   if (bbox) {
     bbox.update();
   }
 
-  manager.render(scene, camera, timestamp, renderCallback);
+  manager.render(scene, camera, timestamp, function() {});
 }
 
 function getIntersectedBeacon() {

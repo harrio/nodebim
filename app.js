@@ -15,6 +15,8 @@ var multer = require('multer');
 var bodyParser = require('body-parser');
 var fs = require('fs');
 
+var PythonShell = require('python-shell');
+
 var app = express();
 
 var nameMap = {};
@@ -58,8 +60,8 @@ app.post('/upload', multer({ dest: './ifc/'}).single('upl'), (req,res) => {
 app.get('/', (req, res, next) => {
   fs.readdir("./gltf", (err, items) => {
       console.log(items);
-      var gltfs = items.filter((item) => { return item.indexOf(".gltf") > 0});
-      res.render("models.jade", {"models": gltfs});
+      var models = items.filter((item) => { return item.indexOf(".js") > 0});
+      res.render("models.jade", {"models": models});
       //res.send(gltfs.map((item) => { return {"file": item}}));
   });
 });
@@ -95,21 +97,29 @@ app.use((err, req, res, next) => {
   });
 });
 
+var convertObjToJson = (srcPath, originalName) => {
+  var options = {
+    mode: 'text',
+    args: ['-i', srcPath, '-o', "gltf/" + originalName + '.js']
+  };
+
+  PythonShell.run('convert_obj_three.py', options, function (err, results) {
+    if (err) throw err;
+    fs.unlink(srcPath, () => { console.log("OBJ file deleted.")})
+    fs.unlink("gltf/" + originalName + '.mtl', () => { console.log("MTL file deleted.")})
+    // results is an array consisting of messages collected during execution
+    console.log('results: %j', results);
+  });
+}
+
 var convertIfc = (path) => {
   var filename = path.replace(/^.*[\\\/]/, '');
   var originalName = nameMap[filename];
   console.log("CONVERT " + path + " -> " + originalName);
-  var daePath = './gltf/' + originalName + '.dae';
-  ifcConvert(path, daePath, {path: '.'})
+  var objPath = './gltf/' + originalName + '.obj';
+  ifcConvert(path, objPath, {path: '.'})
    .then(() => {
-     collada2gltf(daePath, {path: '.'}, (err) => {
-       if (err) {
-         console.log("ERR " + err);
-       } else {
-         fs.unlink(daePath, () => { console.log("Temp file deleted.")})
-         console.log("DONE");
-       }
-     })
+     convertObjToJson(objPath, originalName);
   })
   .catch((e) => { console.log("IFC conversion failed", e) });
 }
