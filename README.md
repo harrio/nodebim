@@ -3,7 +3,7 @@
 ## Usage
 ```bash
 $ npm install
-$ node app.js
+$ npm start
 ```
 
 The application runs on `localhost:3000`
