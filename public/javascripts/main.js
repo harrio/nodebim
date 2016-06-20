@@ -50,9 +50,17 @@
 	
 	var _tween2 = _interopRequireDefault(_tween);
 	
+	var _BimManager = __webpack_require__(4);
+	
+	var BimManager = _interopRequireWildcard(_BimManager);
+	
 	var _Navigator = __webpack_require__(2);
 	
 	var Navigator = _interopRequireWildcard(_Navigator);
+	
+	var _WorldManager = __webpack_require__(3);
+	
+	var WorldManager = _interopRequireWildcard(_WorldManager);
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
@@ -61,8 +69,6 @@
 	/* global THREE */
 	
 	
-	var object = void 0;
-	
 	var camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 10000);
 	var controls = new THREE.VRControls(camera);
 	var dolly = new THREE.Group();
@@ -70,9 +76,6 @@
 	var renderer = new THREE.WebGLRenderer({ antialias: true });
 	var effect = new THREE.VREffect(renderer);
 	var scene = new THREE.Scene();
-	
-	var manager = new THREE.LoadingManager();
-	var loader = new THREE.JSONLoader(manager);
 	
 	var beaconGroup = void 0,
 	    crosshair = void 0,
@@ -95,9 +98,12 @@
 	
 	  beaconGroup = Navigator.createBeacons();
 	
-	  var skybox = createSkybox();
-	  var ground = createGround();
-	  var lights = createLights();
+	  var vertexShader = document.getElementById('vertexShader').textContent;
+	  var fragmentShader = document.getElementById('fragmentShader').textContent;
+	  var skybox = WorldManager.createSkybox(fragmentShader, vertexShader);
+	  var ground = WorldManager.createGround();
+	  var lights = WorldManager.createLights();
+	
 	  scene.add(dolly, beaconGroup, skybox, ground, lights.hemiLight, lights.directionalLight);
 	
 	  effect.setSize(window.innerWidth, window.innerHeight);
@@ -112,71 +118,21 @@
 	  window.addEventListener('vrdisplaypresentchange', onWindowResize, true);
 	};
 	
-	var createSkybox = function createSkybox() {
-	  var vertexShader = document.getElementById('vertexShader').textContent;
-	  var fragmentShader = document.getElementById('fragmentShader').textContent;
-	  var uniforms = {
-	    topColor: { type: 'c', value: new THREE.Color(0x0077ff) },
-	    bottomColor: { type: 'c', value: new THREE.Color(0xffffff) },
-	    offset: { type: 'f', value: 33 },
-	    exponent: { type: 'f', value: 0.6 }
-	  };
-	
-	  var skyGeo = new THREE.SphereGeometry(4000, 32, 15);
-	  var skyMat = new THREE.ShaderMaterial({ vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide });
-	  return new THREE.Mesh(skyGeo, skyMat);
-	};
-	
-	var createGround = function createGround() {
-	  var geometry = new THREE.PlaneGeometry(100, 100);
-	  var material = new THREE.MeshLambertMaterial({ color: 0x7cc000, side: THREE.DoubleSide });
-	  var plane = new THREE.Mesh(geometry, material);
-	  plane.rotation.x = Math.PI / 180 * 90;
-	  return plane;
-	};
-	
-	var createLights = function createLights() {
-	  var hemiLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.7);
-	  hemiLight.name = 'hemiLight';
-	
-	  var directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-	  directionalLight.position.set(50, 50, 50);
-	  directionalLight.name = 'dirLight';
-	
-	  return {
-	    hemiLight: hemiLight,
-	    directionalLight: directionalLight
-	  };
-	};
-	
-	var addObject = function addObject(geometry, materials) {
-	  geometry.mergeVertices();
-	  object = new THREE.Mesh(geometry, new THREE.MultiMaterial(materials));
-	  object.rotation.x = -Math.PI / 2;
-	  scene.add(object);
-	};
-	
-	var loadModel = function loadModel(name) {
-	  scene.remove(object);
-	  // load a resource
-	  loader.load(name, addObject);
-	};
-	
-	function onWindowResize() {
+	var onWindowResize = function onWindowResize() {
 	  camera.aspect = window.innerWidth / window.innerHeight;
 	  effect.setSize(window.innerWidth, window.innerHeight);
 	  camera.updateProjectionMatrix();
-	}
+	};
 	
 	var lastRender = 0;
-	function animate(timestamp) {
+	var animate = function animate(timestamp) {
 	  requestAnimationFrame(animate);
 	  lastRender = timestamp;
 	  controls.update();
 	  render();
 	
 	  VRManager.render(scene, camera, timestamp, function () {});
-	}
+	};
 	
 	var getIntersectedBeacon = function getIntersectedBeacon() {
 	  raycaster.setFromCamera({ x: 0, y: 0 }, camera);
@@ -249,6 +205,10 @@
 	  if (tween) {
 	    _tween2.default.update();
 	  }
+	};
+	
+	var loadModel = function loadModel(name) {
+	  BimManager.loadModelToScene(name, scene);
 	};
 	
 	var showUpload = function showUpload() {
@@ -1224,6 +1184,89 @@
 	exports.createBeacons = createBeacons;
 	exports.initCrosshair = initCrosshair;
 	exports.createCrosshairMaterial = createCrosshairMaterial;
+
+/***/ },
+/* 3 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	/* global THREE */
+	
+	var createSkybox = function createSkybox(fragmentShader, vertexShader) {
+	  var uniforms = {
+	    topColor: { type: 'c', value: new THREE.Color(0x0077ff) },
+	    bottomColor: { type: 'c', value: new THREE.Color(0xffffff) },
+	    offset: { type: 'f', value: 33 },
+	    exponent: { type: 'f', value: 0.6 }
+	  };
+	
+	  var skyGeo = new THREE.SphereGeometry(4000, 32, 15);
+	  var skyMat = new THREE.ShaderMaterial({ vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide });
+	  return new THREE.Mesh(skyGeo, skyMat);
+	};
+	
+	var createGround = function createGround() {
+	  var geometry = new THREE.PlaneGeometry(100, 100);
+	  var material = new THREE.MeshLambertMaterial({ color: 0x7cc000, side: THREE.DoubleSide });
+	  var plane = new THREE.Mesh(geometry, material);
+	  plane.rotation.x = Math.PI / 180 * 90;
+	  return plane;
+	};
+	
+	var createLights = function createLights() {
+	  var hemiLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.7);
+	  hemiLight.name = 'hemiLight';
+	
+	  var directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+	  directionalLight.position.set(50, 50, 50);
+	  directionalLight.name = 'dirLight';
+	
+	  return {
+	    hemiLight: hemiLight,
+	    directionalLight: directionalLight
+	  };
+	};
+	
+	exports.createGround = createGround;
+	exports.createLights = createLights;
+	exports.createSkybox = createSkybox;
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	/* global THREE */
+	
+	var manager = new THREE.LoadingManager();
+	var loader = new THREE.JSONLoader(manager);
+	
+	var object = void 0;
+	
+	var addObject = function addObject(scene) {
+	  return function (geometry, materials) {
+	    geometry.mergeVertices();
+	    object = new THREE.Mesh(geometry, new THREE.MultiMaterial(materials));
+	    object.rotation.x = -Math.PI / 2;
+	    scene.add(object);
+	  };
+	};
+	
+	var loadModelToScene = function loadModelToScene(name, scene) {
+	  scene.remove(object);
+	  // load a resource
+	  loader.load(name, addObject(scene));
+	};
+	
+	exports.loadModelToScene = loadModelToScene;
 
 /***/ }
 /******/ ]);

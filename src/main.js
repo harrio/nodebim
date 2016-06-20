@@ -1,8 +1,9 @@
 /* global THREE */
 import TWEEN from 'tween.js';
+import * as BimManager from './BimManager';
 import * as Navigator from './Navigator';
+import * as WorldManager from './WorldManager';
 
-let object;
 
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 10000);
 const controls = new THREE.VRControls(camera);
@@ -11,9 +12,6 @@ const raycaster  = new THREE.Raycaster();
 const renderer = new THREE.WebGLRenderer({antialias:true});
 const effect = new THREE.VREffect(renderer);
 const scene = new THREE.Scene();
-
-const manager = new THREE.LoadingManager();
-const loader = new THREE.JSONLoader(manager);
 
 let beaconGroup, crosshair, VRManager;
 
@@ -34,9 +32,12 @@ const init = () => {
 
   beaconGroup = Navigator.createBeacons();
 
-  const skybox = createSkybox();
-  const ground = createGround();
-  const lights = createLights();
+  const vertexShader = document.getElementById( 'vertexShader' ).textContent;
+  const fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
+  const skybox = WorldManager.createSkybox(fragmentShader, vertexShader);
+  const ground = WorldManager.createGround();
+  const lights = WorldManager.createLights();
+
   scene.add(dolly, beaconGroup, skybox, ground, lights.hemiLight, lights.directionalLight);
 
 
@@ -45,81 +46,28 @@ const init = () => {
 
   setResizeListeners();
   requestAnimationFrame(animate);
-}
+};
 
 const setResizeListeners = () => {
   window.addEventListener('resize', onWindowResize, true);
   window.addEventListener('vrdisplaypresentchange', onWindowResize, true);
 };
 
-const createSkybox = () => {
-  const vertexShader = document.getElementById( 'vertexShader' ).textContent;
-  const fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
-  const uniforms = {
-    topColor:    { type: 'c', value: new THREE.Color( 0x0077ff ) },
-    bottomColor: { type: 'c', value: new THREE.Color( 0xffffff ) },
-    offset:    { type: 'f', value: 33 },
-    exponent:  { type: 'f', value: 0.6 }
-  };
-
-  const skyGeo = new THREE.SphereGeometry( 4000, 32, 15 );
-  const skyMat = new THREE.ShaderMaterial( { vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide } );
-  return new THREE.Mesh( skyGeo, skyMat );
-}
-
-const createGround = () => {
-  const geometry = new THREE.PlaneGeometry(100, 100);
-  const material = new THREE.MeshLambertMaterial( {color: 0x7cc000, side: THREE.DoubleSide} );
-  const plane = new THREE.Mesh( geometry, material );
-  plane.rotation.x = Math.PI / 180 * 90;
-  return plane;
-}
-
-const createLights = () => {
-  const hemiLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.7);
-  hemiLight.name = 'hemiLight';
-
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-  directionalLight.position.set(50, 50, 50);
-  directionalLight.name = 'dirLight';
-
-  return {
-    hemiLight: hemiLight,
-    directionalLight: directionalLight
-  };
-}
-
-const addObject = (geometry, materials) => {
-  geometry.mergeVertices();
-  object = new THREE.Mesh( geometry, new THREE.MultiMaterial( materials ) );
-  object.rotation.x = -Math.PI/2;
-  scene.add( object );
-}
-
-const loadModel = (name) => {
-  scene.remove(object);
-  // load a resource
-  loader.load(
-      name,
-      addObject
-  );
-}
-
-function onWindowResize() {
+const onWindowResize = () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   effect.setSize(window.innerWidth, window.innerHeight);
   camera.updateProjectionMatrix();
-}
+};
 
 var lastRender = 0;
-function animate(timestamp) {
+const animate = (timestamp) => {
   requestAnimationFrame(animate);
   lastRender = timestamp;
   controls.update();
   render();
 
   VRManager.render(scene, camera, timestamp, function() {});
-}
+};
 
 const getIntersectedBeacon = () =>{
   raycaster.setFromCamera( { x: 0, y: 0 }, camera );
@@ -128,7 +76,7 @@ const getIntersectedBeacon = () =>{
     return null;
   }
   return intersects[0].object;
-}
+};
 
 const setBeaconHighlight = (beacon) => {
   beacon.material.color.setHex(0x00ff00);
@@ -190,21 +138,25 @@ const render = () => {
   if (tween) {
     TWEEN.update();
   }
-}
+};
+
+const loadModel = (name) => {
+  BimManager.loadModelToScene(name, scene);
+};
 
 const showUpload = () => {
   var el = document.querySelectorAll('.upload-form')[0];
   el.style.display = 'block';
-}
+};
 
 const hideUpload = () => {
   var el = document.querySelectorAll('.upload-form')[0];
   el.style.display = 'none';
-}
+};
 
 window.onload = function() {
    init();
-}
+};
 
 window.loadModel = loadModel;
 window.showUpload = showUpload;
