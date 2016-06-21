@@ -1,7 +1,8 @@
 /* global THREE */
 
+const group = new THREE.Group();
+
 const createBeacons = () => {
-  const group = new THREE.Group();
 
   for (let i = -15; i < 25; i++) {
     for (let j = -15; j < 25; j++) {

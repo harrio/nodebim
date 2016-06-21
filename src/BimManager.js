@@ -23,6 +23,15 @@ const loadModelToScene = (name, scene) => {
   );
 }
 
+const getObject = () => {
+  if (object) {
+    return object;
+  } else {
+    return new THREE.Object3D();
+  }
+}
+
 export {
-  loadModelToScene
+  loadModelToScene,
+  getObject
 }
