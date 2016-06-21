@@ -15,7 +15,10 @@ const renderer = new THREE.WebGLRenderer({antialias:true});
 const effect = new THREE.VREffect(renderer);
 const scene = new THREE.Scene();
 
-let beaconGroup, crosshair, VRManager, menuParent;
+let teleportOn = false;
+let onMenu = false;
+
+let beaconGroup, crosshair, VRManager, menuParent, teleporter, ground;
 
 const init = () => {
   camera.position.set(0, 5, 10);
@@ -39,7 +42,7 @@ const init = () => {
   const vertexShader = document.getElementById( 'vertexShader' ).textContent;
   const fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
   const skybox = WorldManager.createSkybox(fragmentShader, vertexShader);
-  const ground = WorldManager.createGround();
+  ground = WorldManager.createGround();
   const lights = WorldManager.createLights();
 
   scene.add(dolly, beaconGroup, skybox, ground, lights.hemiLight, lights.directionalLight);
@@ -52,6 +55,7 @@ const init = () => {
 
 
   setResizeListeners();
+  setClickListeners();
   requestAnimationFrame(animate);
 };
 
@@ -66,6 +70,15 @@ const onWindowResize = () => {
   camera.updateProjectionMatrix();
 };
 
+const setClickListeners = () => {
+  const onClickEvent = (event) => {
+    if (teleportOn && !onMenu && teleporter) {
+      dolly.position.set(teleporter.position.x, teleporter.position.y, teleporter.position.z);
+    }
+  };
+  window.addEventListener("mousedown", onClickEvent, false);
+}
+
 var lastRender = 0;
 const animate = (timestamp) => {
   requestAnimationFrame(animate);
@@ -76,13 +89,31 @@ const animate = (timestamp) => {
   VRManager.render(scene, camera, timestamp, function() {});
 };
 
-const getIntersectedBeacon = () =>{
+const getIntersectedBeacon = () => {
   raycaster.setFromCamera( { x: 0, y: 0 }, camera );
   const intersects = raycaster.intersectObjects(beaconGroup.children);
   if (intersects.length < 1) {
     return null;
   }
   return intersects[0].object;
+};
+
+const getIntersectedMenu = () => {
+  raycaster.setFromCamera( { x: 0, y: 0 }, camera );
+  const intersects = raycaster.intersectObjects(menuParent.children);
+  if (intersects.length < 1) {
+    return null;
+  }
+  return intersects[0].object;
+};
+
+const getIntersectedObj = () => {
+  raycaster.setFromCamera( { x: 0, y: 0 }, camera );
+  const intersects = raycaster.intersectObjects([ground, BimManager.getObject()]);
+  if (intersects.length < 1) {
+    return null;
+  }
+  return intersects[0];
 };
 
 const setBeaconHighlight = (beacon) => {
@@ -116,7 +147,47 @@ const moveDollyToBeaconPosition = (dolly, intersectedBeacon) => {
 };
 
 let intersectedBeacon = null;
+
 const render = () => {
+  Menu.updateMenuPosition(camera, menuParent);
+
+  checkMenu();
+  if (teleportOn) {
+    checkTeleport();
+  } else {
+    checkBeacon();
+  }
+
+  if (tween) {
+    TWEEN.update();
+  }
+};
+
+const checkMenu = () => {
+  const obj = getIntersectedMenu();
+  if (obj) {
+    if (!onMenu) {
+      toggleNavigation();
+    }
+    onMenu = true;
+  } else {
+    onMenu = false;
+  }
+}
+
+const checkTeleport = () => {
+  scene.remove(teleporter);
+  teleporter = null;
+
+  const obj = getIntersectedObj();
+  if (obj && obj.point) {
+    teleporter = Teleporter.createTeleporter();
+    scene.add(teleporter);
+    teleporter.position.set(obj.point.x, obj.point.y, obj.point.z);
+  }
+}
+
+const checkBeacon = () => {
   const obj = getIntersectedBeacon();
 
   if (!obj || tween) { // clear previous highlight if any and reset timer
@@ -135,19 +206,25 @@ const render = () => {
        setBeaconHighlight(intersectedBeacon);
        if (!intersectedBeacon.timestamp) intersectedBeacon.timestamp = Date.now();
 
-       if (Date.now() - intersectedBeacon.timestamp > 2000) { // 2 second stare duration
+       if (Date.now() - intersectedBeacon.timestamp > 1000) { // 1 second stare duration
          crosshair.material = Navigator.createCrosshairMaterial(0xffffff);
          removeBeaconHighlight(intersectedBeacon);
          moveDollyToBeaconPosition(dolly, intersectedBeacon);
        }
   }
 
-  if (tween) {
-    TWEEN.update();
-  }
+}
 
-  Menu.updateMenuPosition(camera, menuParent);
-};
+const toggleNavigation = () => {
+  if (teleportOn) {
+    scene.remove(teleporter);
+    teleporter = null;
+    scene.add(beaconGroup);
+  } else {
+    scene.remove(beaconGroup);
+  }
+  teleportOn = !teleportOn;
+}
 
 const loadModel = (name) => {
   BimManager.loadModelToScene(name, scene);

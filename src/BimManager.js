@@ -45,9 +45,17 @@ const loadEnvironment = (name, scene) => {
 }
 
 
+const getObject = () => {
+  if (object) {
+    return object;
+  } else {
+    return new THREE.Object3D();
+  }
+}
 
 
 export {
   loadModelToScene,
-  loadEnvironment
+  loadEnvironment,
+  getObject
 }
