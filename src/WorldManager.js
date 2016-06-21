@@ -14,9 +14,9 @@ const createSkybox = (fragmentShader, vertexShader) => {
 }
 
 const createGround = () => {
-  const geometry = new THREE.PlaneGeometry(100, 100);
+  const geometry = new THREE.PlaneGeometry(1000, 1000);
   const material = new THREE.MeshLambertMaterial( {color: 0x7cc000, side: THREE.DoubleSide} );
-  const plane = new THREE.Mesh( geometry ); //, material );
+  const plane = new THREE.Mesh( geometry, material );
   plane.rotation.x = Math.PI / 180 * 90;
   return plane;
 }

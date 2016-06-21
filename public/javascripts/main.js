@@ -54,19 +54,19 @@
 	
 	var BimManager = _interopRequireWildcard(_BimManager);
 	
-	var _Navigator = __webpack_require__(3);
+	var _Navigator = __webpack_require__(4);
 	
 	var Navigator = _interopRequireWildcard(_Navigator);
 	
-	var _Teleporter = __webpack_require__(4);
+	var _Teleporter = __webpack_require__(5);
 	
 	var Teleporter = _interopRequireWildcard(_Teleporter);
 	
-	var _Menu = __webpack_require__(5);
+	var _Menu = __webpack_require__(6);
 	
 	var Menu = _interopRequireWildcard(_Menu);
 	
-	var _WorldManager = __webpack_require__(6);
+	var _WorldManager = __webpack_require__(7);
 	
 	var WorldManager = _interopRequireWildcard(_WorldManager);
 	
@@ -85,10 +85,15 @@
 	var effect = new THREE.VREffect(renderer);
 	var scene = new THREE.Scene();
 	
+	var teleportOn = false;
+	var onMenu = false;
+	
 	var beaconGroup = void 0,
 	    crosshair = void 0,
 	    VRManager = void 0,
-	    menuParent = void 0;
+	    menuParent = void 0,
+	    teleporter = void 0,
+	    ground = void 0;
 	
 	var init = function init() {
 	  camera.position.set(0, 5, 10);
@@ -112,7 +117,7 @@
 	  var vertexShader = document.getElementById('vertexShader').textContent;
 	  var fragmentShader = document.getElementById('fragmentShader').textContent;
 	  var skybox = WorldManager.createSkybox(fragmentShader, vertexShader);
-	  var ground = WorldManager.createGround();
+	  ground = WorldManager.createGround();
 	  var lights = WorldManager.createLights();
 	
 	  scene.add(dolly, beaconGroup, skybox, ground, lights.hemiLight, lights.directionalLight);
@@ -123,6 +128,7 @@
 	  BimManager.loadEnvironment('senaatintori.js', scene);
 	
 	  setResizeListeners();
+	  setClickListeners();
 	  requestAnimationFrame(animate);
 	};
 	
@@ -135,6 +141,15 @@
 	  camera.aspect = window.innerWidth / window.innerHeight;
 	  effect.setSize(window.innerWidth, window.innerHeight);
 	  camera.updateProjectionMatrix();
+	};
+	
+	var setClickListeners = function setClickListeners() {
+	  var onClickEvent = function onClickEvent() {
+	    if (teleportOn && !onMenu && teleporter) {
+	      dolly.position.set(teleporter.position.x, teleporter.position.y, teleporter.position.z);
+	    }
+	  };
+	  window.addEventListener('mousedown', onClickEvent, false);
 	};
 	
 	var lastRender = 0;
@@ -154,6 +169,24 @@
 	    return null;
 	  }
 	  return intersects[0].object;
+	};
+	
+	var getIntersectedMenu = function getIntersectedMenu() {
+	  raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+	  var intersects = raycaster.intersectObjects(menuParent.children);
+	  if (intersects.length < 1) {
+	    return null;
+	  }
+	  return intersects[0].object;
+	};
+	
+	var getIntersectedObj = function getIntersectedObj() {
+	  raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+	  var intersects = raycaster.intersectObjects([ground, BimManager.getObject(), BimManager.getEnvironment()]);
+	  if (intersects.length < 1) {
+	    return null;
+	  }
+	  return intersects[0];
 	};
 	
 	var setBeaconHighlight = function setBeaconHighlight(beacon) {
@@ -186,7 +219,47 @@
 	};
 	
 	var intersectedBeacon = null;
+	
 	var render = function render() {
+	  Menu.updateMenuPosition(camera, menuParent);
+	
+	  checkMenu();
+	  if (teleportOn) {
+	    checkTeleport();
+	  } else {
+	    checkBeacon();
+	  }
+	
+	  if (tween) {
+	    _tween2.default.update();
+	  }
+	};
+	
+	var checkMenu = function checkMenu() {
+	  var obj = getIntersectedMenu();
+	  if (obj) {
+	    if (!onMenu) {
+	      toggleNavigation();
+	    }
+	    onMenu = true;
+	  } else {
+	    onMenu = false;
+	  }
+	};
+	
+	var checkTeleport = function checkTeleport() {
+	  scene.remove(teleporter);
+	  teleporter = null;
+	
+	  var obj = getIntersectedObj();
+	  if (obj && obj.point) {
+	    teleporter = Teleporter.createTeleporter();
+	    scene.add(teleporter);
+	    teleporter.position.set(obj.point.x, obj.point.y, obj.point.z);
+	  }
+	};
+	
+	var checkBeacon = function checkBeacon() {
 	  var obj = getIntersectedBeacon();
 	
 	  if (!obj || tween) {
@@ -207,19 +280,24 @@
 	    setBeaconHighlight(intersectedBeacon);
 	    if (!intersectedBeacon.timestamp) intersectedBeacon.timestamp = Date.now();
 	
-	    if (Date.now() - intersectedBeacon.timestamp > 2000) {
-	      // 2 second stare duration
+	    if (Date.now() - intersectedBeacon.timestamp > 1000) {
+	      // 1 second stare duration
 	      crosshair.material = Navigator.createCrosshairMaterial(0xffffff);
 	      removeBeaconHighlight(intersectedBeacon);
 	      moveDollyToBeaconPosition(dolly, intersectedBeacon);
 	    }
 	  }
+	};
 	
-	  if (tween) {
-	    _tween2.default.update();
+	var toggleNavigation = function toggleNavigation() {
+	  if (teleportOn) {
+	    scene.remove(teleporter);
+	    teleporter = null;
+	    scene.add(beaconGroup);
+	  } else {
+	    scene.remove(beaconGroup);
 	  }
-	
-	  Menu.updateMenuPosition(camera, menuParent);
+	  teleportOn = !teleportOn;
 	};
 	
 	var loadModel = function loadModel(name) {
@@ -1149,9 +1227,9 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.loadEnvironment = exports.loadModelToScene = undefined;
+	exports.getObject = exports.getEnvironment = exports.loadEnvironment = exports.loadModelToScene = undefined;
 	
-	var _threeObjLoader = __webpack_require__(7);
+	var _threeObjLoader = __webpack_require__(3);
 	
 	var _threeObjLoader2 = _interopRequireDefault(_threeObjLoader);
 	
@@ -1195,179 +1273,29 @@
 	  });
 	};
 	
+	var getEnvironment = function getEnvironment() {
+	  if (environment) {
+	    return environment;
+	  } else {
+	    return new THREE.Object3D();
+	  }
+	};
+	
+	var getObject = function getObject() {
+	  if (object) {
+	    return object;
+	  } else {
+	    return new THREE.Object3D();
+	  }
+	};
+	
 	exports.loadModelToScene = loadModelToScene;
 	exports.loadEnvironment = loadEnvironment;
+	exports.getEnvironment = getEnvironment;
+	exports.getObject = getObject;
 
 /***/ },
 /* 3 */
-/***/ function(module, exports) {
-
-	"use strict";
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	/* global THREE */
-	
-	var createBeacons = function createBeacons() {
-	  var group = new THREE.Group();
-	
-	  for (var i = -15; i < 25; i++) {
-	    for (var j = -15; j < 25; j++) {
-	      for (var k = 0; k < 4; k++) {
-	        if (i % 3 == 0 && j % 3 == 0) group.add(_createSphere(i, k * 3 + 1, j));
-	      }
-	    }
-	  }
-	  return group;
-	};
-	
-	var _createSphere = function _createSphere(x, y, z) {
-	  var geometry = new THREE.SphereGeometry(0.1, 8, 8);
-	  var material = new THREE.MeshBasicMaterial({
-	    color: 0xff0000,
-	    opacity: 0.1,
-	    transparent: true
-	  });
-	  var sphere = new THREE.Mesh(geometry, material);
-	  sphere.position.x = x;
-	  sphere.position.z = z;
-	  sphere.position.y = y;
-	  material.depthTest = false;
-	  return sphere;
-	};
-	
-	var initCrosshair = function initCrosshair() {
-	  var crosshair = new THREE.Mesh(new THREE.RingGeometry(0.02, 0.04, 32));
-	  crosshair.material = createCrosshairMaterial(0xffffff);
-	  crosshair.position.z = -2;
-	  return crosshair;
-	};
-	
-	var createCrosshairMaterial = function createCrosshairMaterial(hex) {
-	  var material = new THREE.MeshBasicMaterial({
-	    color: hex,
-	    opacity: 0.8,
-	    transparent: true
-	  });
-	  material.depthTest = false;
-	  return material;
-	};
-	
-	exports.createBeacons = createBeacons;
-	exports.initCrosshair = initCrosshair;
-	exports.createCrosshairMaterial = createCrosshairMaterial;
-
-/***/ },
-/* 4 */
-/***/ function(module, exports) {
-
-	"use strict";
-
-/***/ },
-/* 5 */
-/***/ function(module, exports) {
-
-	"use strict";
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	/* global THREE */
-	
-	var yaxis = new THREE.Vector3(0, 1, 0);
-	var zaxis = new THREE.Vector3(0, 0, 1);
-	
-	var createMenu = function createMenu(dolly) {
-	  var menuParent = new THREE.Object3D();
-	
-	  var geometry = new THREE.PlaneGeometry(0.2, 0.2);
-	  var material = new THREE.MeshLambertMaterial({ color: 0xff0000, side: THREE.OneSide });
-	  var menuHandle = new THREE.Mesh(geometry, material);
-	  menuHandle.rotation.x = Math.PI / 180 * -45;
-	
-	  menuHandle.position.z = -0.5;
-	  menuHandle.position.y = 1;
-	
-	  menuParent.add(menuHandle);
-	
-	  dolly.add(menuParent);
-	  return menuParent;
-	};
-	
-	var updateMenuPosition = function updateMenuPosition(camera, menuParent) {
-	  var direction = zaxis.clone();
-	  // Apply the camera's quaternion onto the unit vector of one of the axes
-	  // of our desired rotation plane (the z axis of the xz plane, in this case).
-	  direction.applyQuaternion(camera.quaternion);
-	  // Project the direction vector onto the y axis to get the y component
-	  // of the direction.
-	  var ycomponent = yaxis.clone().multiplyScalar(direction.dot(yaxis));
-	  // Subtract the y component from the direction vector so that we are
-	  // left with the x and z components.
-	  direction.sub(ycomponent);
-	  // Normalize the direction into a unit vector again.
-	  direction.normalize();
-	  // Set the pivot's quaternion to the rotation required to get from the z axis
-	  // to the xz component of the camera's direction.
-	  menuParent.quaternion.setFromUnitVectors(zaxis, direction);
-	};
-	
-	exports.createMenu = createMenu;
-	exports.updateMenuPosition = updateMenuPosition;
-
-/***/ },
-/* 6 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	/* global THREE */
-	
-	var createSkybox = function createSkybox(fragmentShader, vertexShader) {
-	  var uniforms = {
-	    topColor: { type: 'c', value: new THREE.Color(0x0077ff) },
-	    bottomColor: { type: 'c', value: new THREE.Color(0xffffff) },
-	    offset: { type: 'f', value: 33 },
-	    exponent: { type: 'f', value: 0.6 }
-	  };
-	
-	  var skyGeo = new THREE.SphereGeometry(4000, 32, 15);
-	  var skyMat = new THREE.ShaderMaterial({ vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide });
-	  return new THREE.Mesh(skyGeo, skyMat);
-	};
-	
-	var createGround = function createGround() {
-	  var geometry = new THREE.PlaneGeometry(100, 100);
-	  var material = new THREE.MeshLambertMaterial({ color: 0x7cc000, side: THREE.DoubleSide });
-	  var plane = new THREE.Mesh(geometry); //, material );
-	  plane.rotation.x = Math.PI / 180 * 90;
-	  return plane;
-	};
-	
-	var createLights = function createLights() {
-	  var hemiLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.7);
-	  hemiLight.name = 'hemiLight';
-	
-	  var directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-	  directionalLight.position.set(50, 50, 50);
-	  directionalLight.name = 'dirLight';
-	
-	  return {
-	    hemiLight: hemiLight,
-	    directionalLight: directionalLight
-	  };
-	};
-	
-	exports.createGround = createGround;
-	exports.createLights = createLights;
-	exports.createSkybox = createSkybox;
-
-/***/ },
-/* 7 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -1683,6 +1611,200 @@
 	
 	  };
 	};
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	/* global THREE */
+	
+	var group = new THREE.Group();
+	
+	var createBeacons = function createBeacons() {
+	
+	  for (var i = -15; i < 25; i++) {
+	    for (var j = -15; j < 25; j++) {
+	      for (var k = 0; k < 4; k++) {
+	        if (i % 3 == 0 && j % 3 == 0) group.add(_createSphere(i, k * 3 + 1, j));
+	      }
+	    }
+	  }
+	  return group;
+	};
+	
+	var _createSphere = function _createSphere(x, y, z) {
+	  var geometry = new THREE.SphereGeometry(0.1, 8, 8);
+	  var material = new THREE.MeshBasicMaterial({
+	    color: 0xff0000,
+	    opacity: 0.1,
+	    transparent: true
+	  });
+	  var sphere = new THREE.Mesh(geometry, material);
+	  sphere.position.x = x;
+	  sphere.position.z = z;
+	  sphere.position.y = y;
+	  material.depthTest = false;
+	  return sphere;
+	};
+	
+	var initCrosshair = function initCrosshair() {
+	  var crosshair = new THREE.Mesh(new THREE.RingGeometry(0.02, 0.04, 32));
+	  crosshair.material = createCrosshairMaterial(0xffffff);
+	  crosshair.position.z = -2;
+	  return crosshair;
+	};
+	
+	var createCrosshairMaterial = function createCrosshairMaterial(hex) {
+	  var material = new THREE.MeshBasicMaterial({
+	    color: hex,
+	    opacity: 0.8,
+	    transparent: true
+	  });
+	  material.depthTest = false;
+	  return material;
+	};
+	
+	exports.createBeacons = createBeacons;
+	exports.initCrosshair = initCrosshair;
+	exports.createCrosshairMaterial = createCrosshairMaterial;
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	/* global THREE */
+	
+	var _createCone = function _createCone(x, y, z) {
+	  var geometry = new THREE.CylinderGeometry(0.5, 0.5, 4, 8, 8);
+	  var material = new THREE.MeshBasicMaterial({
+	    color: 0xffff00,
+	    opacity: 0.4,
+	    transparent: true
+	  });
+	  var cone = new THREE.Mesh(geometry, material);
+	  cone.position.x = x;
+	  cone.position.z = z;
+	  cone.position.y = y;
+	  return cone;
+	};
+	
+	var createTeleporter = function createTeleporter() {
+	  return _createCone(0, 0, 0);
+	};
+	
+	exports.createTeleporter = createTeleporter;
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	/* global THREE */
+	
+	var yaxis = new THREE.Vector3(0, 1, 0);
+	var zaxis = new THREE.Vector3(0, 0, 1);
+	
+	var createMenu = function createMenu(dolly) {
+	  var menuParent = new THREE.Object3D();
+	
+	  var geometry = new THREE.PlaneGeometry(0.2, 0.2);
+	  var material = new THREE.MeshLambertMaterial({ color: 0xff0000, side: THREE.OneSide });
+	  var menuHandle = new THREE.Mesh(geometry, material);
+	  menuHandle.rotation.x = Math.PI / 180 * -45;
+	
+	  menuHandle.position.z = -0.5;
+	  menuHandle.position.y = 1;
+	
+	  menuParent.add(menuHandle);
+	
+	  dolly.add(menuParent);
+	  return menuParent;
+	};
+	
+	var updateMenuPosition = function updateMenuPosition(camera, menuParent) {
+	  var direction = zaxis.clone();
+	  // Apply the camera's quaternion onto the unit vector of one of the axes
+	  // of our desired rotation plane (the z axis of the xz plane, in this case).
+	  direction.applyQuaternion(camera.quaternion);
+	  // Project the direction vector onto the y axis to get the y component
+	  // of the direction.
+	  var ycomponent = yaxis.clone().multiplyScalar(direction.dot(yaxis));
+	  // Subtract the y component from the direction vector so that we are
+	  // left with the x and z components.
+	  direction.sub(ycomponent);
+	  // Normalize the direction into a unit vector again.
+	  direction.normalize();
+	  // Set the pivot's quaternion to the rotation required to get from the z axis
+	  // to the xz component of the camera's direction.
+	  menuParent.quaternion.setFromUnitVectors(zaxis, direction);
+	};
+	
+	exports.createMenu = createMenu;
+	exports.updateMenuPosition = updateMenuPosition;
+
+/***/ },
+/* 7 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	/* global THREE */
+	
+	var createSkybox = function createSkybox(fragmentShader, vertexShader) {
+	  var uniforms = {
+	    topColor: { type: 'c', value: new THREE.Color(0x0077ff) },
+	    bottomColor: { type: 'c', value: new THREE.Color(0xffffff) },
+	    offset: { type: 'f', value: 33 },
+	    exponent: { type: 'f', value: 0.6 }
+	  };
+	
+	  var skyGeo = new THREE.SphereGeometry(4000, 32, 15);
+	  var skyMat = new THREE.ShaderMaterial({ vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide });
+	  return new THREE.Mesh(skyGeo, skyMat);
+	};
+	
+	var createGround = function createGround() {
+	  var geometry = new THREE.PlaneGeometry(1000, 1000);
+	  var material = new THREE.MeshLambertMaterial({ color: 0x7cc000, side: THREE.DoubleSide });
+	  var plane = new THREE.Mesh(geometry, material);
+	  plane.rotation.x = Math.PI / 180 * 90;
+	  return plane;
+	};
+	
+	var createLights = function createLights() {
+	  var hemiLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.7);
+	  hemiLight.name = 'hemiLight';
+	
+	  var directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+	  directionalLight.position.set(50, 50, 50);
+	  directionalLight.name = 'dirLight';
+	
+	  return {
+	    hemiLight: hemiLight,
+	    directionalLight: directionalLight
+	  };
+	};
+	
+	exports.createGround = createGround;
+	exports.createLights = createLights;
+	exports.createSkybox = createSkybox;
 
 /***/ }
 /******/ ]);

@@ -42,7 +42,7 @@ const init = () => {
   const vertexShader = document.getElementById( 'vertexShader' ).textContent;
   const fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
   const skybox = WorldManager.createSkybox(fragmentShader, vertexShader);
-  ground = WorldManager.createGround();
+   ground = WorldManager.createGround();
   const lights = WorldManager.createLights();
 
   scene.add(dolly, beaconGroup, skybox, ground, lights.hemiLight, lights.directionalLight);
@@ -71,12 +71,12 @@ const onWindowResize = () => {
 };
 
 const setClickListeners = () => {
-  const onClickEvent = (event) => {
+  const onClickEvent = () => {
     if (teleportOn && !onMenu && teleporter) {
       dolly.position.set(teleporter.position.x, teleporter.position.y, teleporter.position.z);
     }
   };
-  window.addEventListener("mousedown", onClickEvent, false);
+  window.addEventListener('mousedown', onClickEvent, false);
 }
 
 var lastRender = 0;
@@ -109,7 +109,7 @@ const getIntersectedMenu = () => {
 
 const getIntersectedObj = () => {
   raycaster.setFromCamera( { x: 0, y: 0 }, camera );
-  const intersects = raycaster.intersectObjects([ground, BimManager.getObject()]);
+  const intersects = raycaster.intersectObjects([ground, BimManager.getObject(), BimManager.getEnvironment()]);
   if (intersects.length < 1) {
     return null;
   }
