@@ -2,6 +2,8 @@
 import TWEEN from 'tween.js';
 import * as BimManager from './BimManager';
 import * as Navigator from './Navigator';
+import * as Teleporter from './Teleporter';
+import * as Menu from './Menu';
 import * as WorldManager from './WorldManager';
 
 
@@ -13,7 +15,7 @@ const renderer = new THREE.WebGLRenderer({antialias:true});
 const effect = new THREE.VREffect(renderer);
 const scene = new THREE.Scene();
 
-let beaconGroup, crosshair, VRManager;
+let beaconGroup, crosshair, VRManager, menuParent;
 
 const init = () => {
   camera.position.set(0, 5, 10);
@@ -28,7 +30,9 @@ const init = () => {
 
   controls.standing = true;
 
-  dolly.add( camera );
+  dolly.add(camera);
+
+  menuParent = Menu.createMenu(dolly);
 
   beaconGroup = Navigator.createBeacons();
 
@@ -138,6 +142,8 @@ const render = () => {
   if (tween) {
     TWEEN.update();
   }
+
+  Menu.updateMenuPosition(camera, menuParent);
 };
 
 const loadModel = (name) => {
