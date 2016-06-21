@@ -75,7 +75,7 @@
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	/* global THREE */
-	
+	/* global THREEx */
 	
 	var camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 10000);
 	var controls = new THREE.VRControls(camera);
@@ -84,9 +84,11 @@
 	var renderer = new THREE.WebGLRenderer({ antialias: true });
 	var effect = new THREE.VREffect(renderer);
 	var scene = new THREE.Scene();
+	var keyboard = new THREEx.KeyboardState();
 	
 	var teleportOn = false;
 	var onMenu = false;
+	var keyboardOn = true;
 	
 	var beaconGroup = void 0,
 	    crosshair = void 0,
@@ -125,7 +127,7 @@
 	  effect.setSize(window.innerWidth, window.innerHeight);
 	  VRManager = new WebVRManager(renderer, effect);
 	
-	  BimManager.loadEnvironment('senaatintori.js', scene);
+	  BimManager.loadEnvironment('helsinki.js', scene);
 	
 	  setResizeListeners();
 	  setClickListeners();
@@ -147,6 +149,7 @@
 	  var onClickEvent = function onClickEvent() {
 	    if (teleportOn && !onMenu && teleporter) {
 	      dolly.position.set(teleporter.position.x, teleporter.position.y, teleporter.position.z);
+	      console.log('Dolly: ' + dolly.position.x + ',' + dolly.position.y + ',' + dolly.position.z);
 	    }
 	  };
 	  window.addEventListener('mousedown', onClickEvent, false);
@@ -198,19 +201,27 @@
 	  beacon.timestamp = null;
 	};
 	
-	var tween = null;
 	var moveDollyToBeaconPosition = function moveDollyToBeaconPosition(dolly, intersectedBeacon) {
-	  var tweenPos = { x: dolly.position.x, y: dolly.position.y, z: dolly.position.z };
-	  tween = new _tween2.default.Tween(tweenPos).to({
+	  moveDollyTo(dolly, {
 	    x: intersectedBeacon.position.x,
 	    y: intersectedBeacon.position.y - 1,
 	    z: intersectedBeacon.position.z }, 1000);
+	};
+	
+	var tween = null;
+	var moveDollyTo = function moveDollyTo(dolly, pos, time) {
+	  var tweenPos = { x: dolly.position.x, y: dolly.position.y, z: dolly.position.z };
+	  if (tween) {
+	    tween.stop();
+	  }
+	  tween = new _tween2.default.Tween(tweenPos).to(pos, time);
 	
 	  tween.onUpdate(function () {
 	    dolly.position.set(tweenPos.x, tweenPos.y, tweenPos.z);
 	  });
 	
 	  tween.onComplete(function () {
+	    console.log('Dolly: ' + dolly.position.x + ',' + dolly.position.y + ',' + dolly.position.z);
 	    tween = null;
 	  });
 	
@@ -230,9 +241,52 @@
 	    checkBeacon();
 	  }
 	
+	  if (keyboardOn) {
+	    checkKeyboard();
+	  }
+	
 	  if (tween) {
 	    _tween2.default.update();
 	  }
+	};
+	
+	var checkKeyboard = function checkKeyboard() {
+	  var hspeed = 100;
+	  var vspeed = 100;
+	  var vstep = 0.5;
+	  var hstep = 0.5;
+	  var rot = 3.14 / 180 * 5;
+	
+	  if (keyboard.pressed('W')) {
+	    //alignDollyTo(camera.getWorldDirection());
+	    dolly.translateZ(-hstep);
+	  }
+	
+	  if (keyboard.pressed('S')) {
+	    //alignDollyTo(camera.getWorldDirection());
+	    dolly.translateZ(hstep);
+	  }
+	
+	  if (keyboard.pressed('A')) {
+	    dolly.rotateY(rot);
+	  }
+	
+	  if (keyboard.pressed('D')) {
+	    dolly.rotateY(-rot);
+	  }
+	
+	  if (keyboard.pressed('R')) {
+	    dolly.translateY(vstep);
+	  }
+	  if (keyboard.pressed('F')) {
+	    dolly.translateY(-vstep);
+	  }
+	};
+	
+	var alignDollyTo = function alignDollyTo(vec) {
+	  dolly.lookAt(new THREE.Vector3(0, vec.y, 0));
+	  //const axis = new THREE.Vector3(0, 1, 0);
+	  //dolly.quaternion.setFromUnitVectors(axis, vec.clone().normalize());
 	};
 	
 	var checkMenu = function checkMenu() {
@@ -1265,9 +1319,9 @@
 	  loader.load(name, function (geometry, materials) {
 	    geometry.mergeVertices();
 	    environment = new THREE.Mesh(geometry, new THREE.MultiMaterial(materials));
+	    environment.position.x = 44;
 	    environment.position.y = 0.1;
-	    //      environment.position.z = 50;
-	    //      environment.position.x = 50;
+	    environment.position.z = 180;
 	
 	    scene.add(environment);
 	  });
@@ -1782,7 +1836,7 @@
 	
 	var createGround = function createGround() {
 	  var geometry = new THREE.PlaneGeometry(1000, 1000);
-	  var material = new THREE.MeshLambertMaterial({ color: 0x7cc000, side: THREE.DoubleSide });
+	  var material = new THREE.MeshLambertMaterial({ color: 0x2c6000, side: THREE.DoubleSide });
 	  var plane = new THREE.Mesh(geometry, material);
 	  plane.rotation.x = Math.PI / 180 * 90;
 	  return plane;
