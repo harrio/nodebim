@@ -48,6 +48,9 @@ const init = () => {
   effect.setSize(window.innerWidth, window.innerHeight);
   VRManager = new WebVRManager(renderer, effect);
 
+  BimManager.loadEnvironment('senaatintori.js', scene);
+
+
   setResizeListeners();
   requestAnimationFrame(animate);
 };
