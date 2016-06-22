@@ -46,8 +46,8 @@ const createMenu = (dolly, camera, renderer, materials) => {
     menuHandle.name = key;
     menuHandle.rotation.x = Math.PI / 180 * -20;
 
-    menuHandle.position.x = 0.3 * x - 0.5;
-    menuHandle.position.y = 0.2 * y + 1;
+    menuHandle.position.x = 0.35 * x - 0.5;
+    menuHandle.position.y = 0.3 * y + 1;
     menuHandle.position.z = -1;
 
     menuParent.add(menuHandle);
@@ -56,7 +56,7 @@ const createMenu = (dolly, camera, renderer, materials) => {
     let spritey = Text.makeText(cleanMaterialName(material.name), renderer);
     //spritey.position.set(menuHandle.position.x, menuHandle.position.y + 0.07, menuHandle.position.z);
     //spritey.position.set(-5, 2, 0);
-    spritey.scale.multiplyScalar(-0.001);
+    spritey.scale.multiplyScalar(-0.0018);
     //dolly.parent.add(spritey);
     menuHandle.add(spritey);
     //spritey.rotation.y =
