@@ -182,10 +182,9 @@ const render = () => {
 };
 
 const logPos = (name, obj) => {
-    console.log(name+" position: ",obj.position);
-    console.log(name+" rotation: ",obj.rotation);
-    console.log(name+" worldDir: ",obj.getWorldDirection());
-
+    console.log(name+' position: ',obj.position);
+    console.log(name+' rotation: ',obj.rotation);
+    console.log(name+' worldDir: ',obj.getWorldDirection());
 }
 
 const checkKeyboard = () => {
@@ -234,13 +233,6 @@ const checkKeyboard = () => {
 
 }
 
-const alignDollyToCamera = () => {
-  console.log(dolly.getWorldRotation());
-  console.log(camera.rotation);  
-  
-  dolly.quaternion.setFromEuler(new THREE.Euler(0, camera.getWorldRotation().y, 0, 'XYZ'));
-
-}
 
 const toggleNavigation = () => {
   if (teleportOn) {
