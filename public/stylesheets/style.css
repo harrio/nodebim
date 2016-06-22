@@ -59,20 +59,21 @@ input[type=submit]:active,
 }
 
 .side-menu {
+  background-color: #333333;
+  border: 2px solid #6464fb;
   display: inline-block;
-  vertical-align: top;
-  width: 25%;
+  left: 10px;
   position: absolute;
   top: 10px;
-  left: 10px;
-  background-color: #333333;
+  vertical-align: top;
+  width: 25%;
 }
 
 .side-menu-button {
   border: 1px solid #6464fb;
   cursor: pointer;
   display: none;
-  margin: 5px;
+  margin: 3px;
   width: 26px;
 }
 
