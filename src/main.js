@@ -41,7 +41,7 @@ const init = () => {
   const vertexShader = document.getElementById( 'vertexShader' ).textContent;
   const fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
   const skybox = WorldManager.createSkybox(fragmentShader, vertexShader);
-   ground = WorldManager.createGround();
+  ground = WorldManager.createGround();
   const lights = WorldManager.createLights();
 
   scene.add(dolly, skybox, ground, lights.hemiLight, lights.directionalLight);
@@ -54,9 +54,14 @@ const init = () => {
 
   toggleParent = Menu.createMenuToggle(dolly);
 
-  setResizeListeners();
+  initResize();
   setClickListeners();
   requestAnimationFrame(animate);
+};
+
+const initResize = () => {
+  onWindowResize();
+  setResizeListeners();
 };
 
 const setResizeListeners = () => {
