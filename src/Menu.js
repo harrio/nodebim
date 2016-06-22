@@ -31,7 +31,7 @@ const cleanMaterialName = (name) => {
   return name;
 }
 
-const createMenu = (dolly, camera, materials) => {
+const createMenu = (dolly, camera, renderer, materials) => {
   dolly.remove(menuParent);
   dolly.remove(textParent);
   menuParent = new THREE.Object3D();
@@ -44,7 +44,7 @@ const createMenu = (dolly, camera, materials) => {
 
     const menuHandle = new THREE.Mesh(geometry, material);
     menuHandle.name = key;
-    menuHandle.rotation.x = Math.PI / 180 * -45;
+    menuHandle.rotation.x = Math.PI / 180 * -20;
 
     menuHandle.position.x = 0.3 * x - 0.5;
     menuHandle.position.y = 0.2 * y + 1;
@@ -53,10 +53,10 @@ const createMenu = (dolly, camera, materials) => {
     menuParent.add(menuHandle);
 
     //textParent.scale.multiplyScalar(0.005);
-    let spritey = Text.makeText(cleanMaterialName(material.name));
+    let spritey = Text.makeText(cleanMaterialName(material.name), renderer);
     //spritey.position.set(menuHandle.position.x, menuHandle.position.y + 0.07, menuHandle.position.z);
     //spritey.position.set(-5, 2, 0);
-    spritey.scale.multiplyScalar(-0.0008);
+    spritey.scale.multiplyScalar(-0.001);
     //dolly.parent.add(spritey);
     menuHandle.add(spritey);
     //spritey.rotation.y =

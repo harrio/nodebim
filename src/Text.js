@@ -14,13 +14,13 @@ loader.load('fonts/DejaVu-sdf.png', (tx) => {
   console.log("Texture loaded");
   texture = tx;});
 
-const makeText = (message) => {
+const makeText = (message, renderer) => {
 
   texture.needsUpdate = true
   texture.minFilter = THREE.LinearMipMapLinearFilter
   texture.magFilter = THREE.LinearFilter
   texture.generateMipmaps = true
-
+  texture.anisotropy = renderer.getMaxAnisotropy();
 
   // create a geometry of packed bitmap glyphs,
   // word wrapped to 300px and right-aligned
@@ -28,21 +28,13 @@ const makeText = (message) => {
     width: 300,
     align: 'center',
     text: message,
-    font: font,
-    flipY: texture.flipY
+    font: font
   });
 
   // change text and other options as desired
   // the options sepcified in constructor will
   // be used as defaults
   //geometry.update(message);
-
-  // the resulting layout has metrics and bounds
-  console.log(geometry.layout.height);
-  console.log(geometry.layout.descender);
-
-  // the texture atlas containing our glyphs
-  //var texture = THREE.ImageUtils.loadTexture('fonts/DejaVu-sdf.png');
 
   // we can use a simple ThreeJS material
   var material = new THREE.MeshBasicMaterial({
@@ -54,7 +46,7 @@ const makeText = (message) => {
 
   // now do something with our mesh!
   var mesh = new THREE.Mesh(geometry, material);
-  const padding = 0.1;
+  
   mesh.position.set(-geometry.layout.width / 2, geometry.layout.height, 0.01);
 
   var textAnchor = new THREE.Object3D();

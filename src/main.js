@@ -109,7 +109,7 @@ const setClickListeners = () => {
           Menu.hideMenu(dolly);
           menuParent = null;
         } else {
-          menuParent = Menu.createMenu(dolly, camera, BimManager.getMaterials());
+          menuParent = Menu.createMenu(dolly, camera, renderer, BimManager.getMaterials());
         }
         toggleNavigation();
       } else {
