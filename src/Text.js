@@ -1,5 +1,71 @@
 /* global THREE */
 
+import createGeometry from 'three-bmfont-text';
+import loadFont from 'load-bmfont';
+
+let font, texture;
+
+loadFont('fonts/DejaVu-sdf.fnt', function(err, f) {
+  font = f;
+});
+
+const loader = new THREE.TextureLoader();
+loader.load('fonts/DejaVu-sdf.png', (tx) => {
+  console.log("Texture loaded");
+  texture = tx;});
+
+const makeText = (message) => {
+
+  texture.needsUpdate = true
+  texture.minFilter = THREE.LinearMipMapLinearFilter
+  texture.magFilter = THREE.LinearFilter
+  texture.generateMipmaps = true
+
+
+  // create a geometry of packed bitmap glyphs,
+  // word wrapped to 300px and right-aligned
+  var geometry = createGeometry({
+    width: 300,
+    align: 'center',
+    text: message,
+    font: font,
+    flipY: texture.flipY
+  });
+
+  // change text and other options as desired
+  // the options sepcified in constructor will
+  // be used as defaults
+  //geometry.update(message);
+
+  // the resulting layout has metrics and bounds
+  console.log(geometry.layout.height);
+  console.log(geometry.layout.descender);
+
+  // the texture atlas containing our glyphs
+  //var texture = THREE.ImageUtils.loadTexture('fonts/DejaVu-sdf.png');
+
+  // we can use a simple ThreeJS material
+  var material = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    side: THREE.DoubleSide,
+    color: 0xffffff
+  });
+
+  // now do something with our mesh!
+  var mesh = new THREE.Mesh(geometry, material);
+  const padding = 0.1;
+  mesh.position.set(-geometry.layout.width / 2, geometry.layout.height, 0.01);
+
+  var textAnchor = new THREE.Object3D();
+  textAnchor.position.y = -0.05;
+  textAnchor.add(mesh);
+  textAnchor.rotation.y = Math.PI;
+
+  return textAnchor;
+};
+
+
 const makeTextSprite = (message, fontsize) => {
   let ctx, texture, sprite, spriteMaterial,
   canvas = document.createElement('canvas');
@@ -29,5 +95,6 @@ const makeTextSprite = (message, fontsize) => {
 
 
 export {
-  makeTextSprite
+  makeTextSprite,
+  makeText
 }

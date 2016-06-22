@@ -46,16 +46,22 @@ const createMenu = (dolly, camera, materials) => {
     menuHandle.name = key;
     menuHandle.rotation.x = Math.PI / 180 * -45;
 
-    menuHandle.position.x = 0.2 * x - 0.5;
+    menuHandle.position.x = 0.3 * x - 0.5;
     menuHandle.position.y = 0.2 * y + 1;
     menuHandle.position.z = -1;
 
     menuParent.add(menuHandle);
 
-    let spritey = Text.makeTextSprite(cleanMaterialName(material.name), 70);
-   spritey.position.set(menuHandle.position.x, menuHandle.position.y + 0.07, menuHandle.position.z);
-    textParent.add(spritey);
-
+    //textParent.scale.multiplyScalar(0.005);
+    let spritey = Text.makeText(cleanMaterialName(material.name));
+    //spritey.position.set(menuHandle.position.x, menuHandle.position.y + 0.07, menuHandle.position.z);
+    //spritey.position.set(-5, 2, 0);
+    spritey.scale.multiplyScalar(-0.0008);
+    //dolly.parent.add(spritey);
+    menuHandle.add(spritey);
+    //spritey.rotation.y =
+    //textParent.add(spritey);
+    console.log(spritey.position);
     x = x < 4 ? x + 1 : 0;
     y = x == 0 ? y + 1 : y;
   }
