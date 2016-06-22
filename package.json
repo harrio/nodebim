@@ -20,6 +20,7 @@
     "python-shell": "^0.4.0",
     "serve-favicon": "~2.3.0",
     "three": "^0.78.0",
+    "three-obj-loader": "^1.0.2",
     "tween.js": "^16.3.4",
     "watchr": "^2.4.13",
     "webvr-boilerplate": "^0.4.3"

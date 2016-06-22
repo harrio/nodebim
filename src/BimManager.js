@@ -1,9 +1,14 @@
 /* global THREE */
 
+import OBJLoader from 'three-obj-loader';
+OBJLoader(THREE);
+
 const manager = new THREE.LoadingManager();
 const loader = new THREE.JSONLoader(manager);
+const envLoader = new THREE.OBJLoader(manager);
 
 let object;
+let environment;
 
 const addObject = (scene) => {
   return (geometry, materials) => {
@@ -23,6 +28,31 @@ const loadModelToScene = (name, scene) => {
   );
 }
 
+const loadEnvironment = (name, scene) => {
+  if (environment) scene.remove(environment);
+
+  loader.load(
+    name, (geometry, materials) => {
+      geometry.mergeVertices();
+      environment = new THREE.Mesh( geometry, new THREE.MultiMaterial( materials ) );
+      environment.position.x = 44;
+      environment.position.y = 0.1;
+      environment.position.z = 180;
+
+      scene.add(environment);
+   });
+
+}
+
+
+const getEnvironment = () => {
+  if (environment) {
+    return environment;
+  } else {
+    return new THREE.Object3D();
+  }
+}
+
 const getObject = () => {
   if (object) {
     return object;
@@ -31,7 +61,10 @@ const getObject = () => {
   }
 }
 
+
 export {
   loadModelToScene,
+  loadEnvironment,
+  getEnvironment,
   getObject
 }

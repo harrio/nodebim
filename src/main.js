@@ -1,4 +1,6 @@
 /* global THREE */
+/* global THREEx */
+
 import TWEEN from 'tween.js';
 import * as BimManager from './BimManager';
 import * as Navigator from './Navigator';
@@ -12,9 +14,11 @@ const controls = new THREE.VRControls(camera);
 const dolly = new THREE.Group();
 const raycaster  = new THREE.Raycaster();
 const scene = new THREE.Scene();
+const keyboard = new THREEx.KeyboardState();
 
 let teleportOn = false;
 let onMenu = false;
+let keyboardOn = true;
 let renderer, canvas, effect;
 
 let beaconGroup, crosshair, VRManager, menuParent, teleporter, ground;
@@ -41,7 +45,7 @@ const init = () => {
   const vertexShader = document.getElementById( 'vertexShader' ).textContent;
   const fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
   const skybox = WorldManager.createSkybox(fragmentShader, vertexShader);
-  ground = WorldManager.createGround();
+   ground = WorldManager.createGround();
   const lights = WorldManager.createLights();
 
   scene.add(dolly, beaconGroup, skybox, ground, lights.hemiLight, lights.directionalLight);
@@ -49,6 +53,9 @@ const init = () => {
 
   effect.setSize(window.innerWidth, window.innerHeight);
   VRManager = new WebVRManager(renderer, effect);
+
+  BimManager.loadEnvironment('helsinki.js', scene);
+
 
   setResizeListeners();
   setClickListeners();
@@ -108,7 +115,7 @@ const getIntersectedMenu = () => {
 
 const getIntersectedObj = () => {
   raycaster.setFromCamera( { x: 0, y: 0 }, camera );
-  const intersects = raycaster.intersectObjects([ground, BimManager.getObject()]);
+  const intersects = raycaster.intersectObjects([ground, BimManager.getObject(), BimManager.getEnvironment()]);
   if (intersects.length < 1) {
     return null;
   }
@@ -124,14 +131,22 @@ const removeBeaconHighlight = (beacon) => {
   beacon.timestamp = null;
 };
 
-let tween = null;
 const moveDollyToBeaconPosition = (dolly, intersectedBeacon) => {
-  const tweenPos = {x: dolly.position.x, y: dolly.position.y, z: dolly.position.z};
-  tween = new TWEEN.Tween(tweenPos).to({
+  moveDollyTo(dolly, {
     x: intersectedBeacon.position.x,
     y: intersectedBeacon.position.y-1,
     z: intersectedBeacon.position.z},
-  1000);
+    1000);
+};
+
+let tween = null;
+const moveDollyTo = (dolly, pos, time) => {
+  const tweenPos = {x: dolly.position.x, y: dolly.position.y, z: dolly.position.z};
+  if (tween) {
+    tween.stop();
+  }
+  tween = new TWEEN.Tween(tweenPos).to(pos, time);
+
 
   tween.onUpdate(() => {
     dolly.position.set(tweenPos.x, tweenPos.y, tweenPos.z);
@@ -143,7 +158,8 @@ const moveDollyToBeaconPosition = (dolly, intersectedBeacon) => {
 
   tween.easing(TWEEN.Easing.Quadratic.In);
   tween.start();
-};
+}
+
 
 let intersectedBeacon = null;
 
@@ -157,10 +173,55 @@ const render = () => {
     checkBeacon();
   }
 
+  if (keyboardOn) {
+    checkKeyboard();
+  }
+
   if (tween) {
     TWEEN.update();
   }
 };
+
+const checkKeyboard = () => {
+  const hspeed = 100;
+  const vspeed = 100;
+  const vstep = 0.5;
+  const hstep = 0.5;
+  const rot = 3.14/180 * 5;
+
+
+  if (keyboard.pressed('W')) {
+    //alignDollyTo(camera.getWorldDirection());
+    dolly.translateZ(-hstep);
+  }
+
+  if (keyboard.pressed('S')) {
+    //alignDollyTo(camera.getWorldDirection());
+    dolly.translateZ(hstep);
+  }
+
+  if (keyboard.pressed('A')) {
+    dolly.rotateY(rot);
+  }
+
+  if (keyboard.pressed('D')) {
+    dolly.rotateY(-rot);
+  }
+
+  if (keyboard.pressed('R')) {
+    dolly.translateY(vstep);
+  }
+  if (keyboard.pressed('F')) {
+    dolly.translateY(-vstep);
+  }
+
+}
+
+const alignDollyTo = (vec) => {
+  dolly.lookAt(new THREE.Vector3(0, vec.y, 0));
+  //const axis = new THREE.Vector3(0, 1, 0);
+  //dolly.quaternion.setFromUnitVectors(axis, vec.clone().normalize());
+}
 
 const checkMenu = () => {
   const obj = getIntersectedMenu();
@@ -238,6 +299,8 @@ const hideUpload = () => {
   var el = document.querySelectorAll('.upload-form')[0];
   el.style.display = 'none';
 };
+
+
 
 window.onload = function() {
    init();
