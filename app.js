@@ -156,8 +156,11 @@ watchr.watch({
     }
 });
 
-app.listen(PORT, () => {
-  console.log('Example app listening on port '+PORT+'!');
+var port = process.argv[2];
+port = port ? port : PORT;
+
+app.listen(port, () => {
+  console.log('Example app listening on port '+port+'!');
 });
 
 module.exports = app;
