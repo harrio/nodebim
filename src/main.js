@@ -204,18 +204,18 @@ const toggleNavigation = () => {
   if (teleportOn) {
     scene.remove(teleporter);
     teleporter = null;
-  } 
+  }
   teleportOn = !teleportOn;
 }
 
 const checkTeleport = () => {
-  scene.remove(teleporter);
-  teleporter = null;
+  if (!teleporter) {
+    teleporter = Teleporter.createTeleporter();
+    scene.add(teleporter);
+  }
 
   const obj = getIntersectedObj();
   if (obj && obj.point) {
-    teleporter = Teleporter.createTeleporter();
-    scene.add(teleporter);
     teleporter.position.set(obj.point.x, obj.point.y, obj.point.z);
   }
 }
