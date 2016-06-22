@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node app.js",
+    "start": "npm run build && node app.js",
     "build": "webpack --mode=build",
     "dev": "webpack --progress --colors --watch --mode=dev"
   },
