@@ -3,11 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-<<<<<<< HEAD
     "start": "webpack --mode=build && node app.js",
-=======
     "start": "npm run build && node app.js",
->>>>>>> 35f933ea33ffa0a78179ec4e42c4ccca586b286b
     "build": "webpack --mode=build",
     "dev": "webpack --progress --colors --watch --mode=dev"
   },
