@@ -26,7 +26,7 @@ const makeText = (message, renderer) => {
   // create a geometry of packed bitmap glyphs,
   // word wrapped to 300px and right-aligned
   var geometry = createGeometry({
-    width: 300,
+    width: 230,
     align: 'center',
     text: message,
     font: font
