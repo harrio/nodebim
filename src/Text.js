@@ -7,8 +7,8 @@ const makeTextSprite = (message, fontsize) => {
   ctx.font = fontsize + "px Arial";
 
   // setting canvas width/height before ctx draw, else canvas is empty
-  canvas.width = ctx.measureText(message).width + 10;
-  canvas.height = fontsize * 2; // fontsize * 1.5
+  canvas.width = ctx.measureText(message).width;
+  //canvas.height = fontsize * 2; // fontsize * 1.5
 
   // after setting the canvas width/height we have to re-set font to apply!?! looks like ctx reset
   ctx.font = fontsize + "px Arial";
