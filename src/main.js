@@ -63,7 +63,7 @@ const init = () => {
 
   document.addEventListener('contextmenu', (event) => {
     event.preventDefault();
-    return false; 
+    return false;
   }, false);
 
 
@@ -153,7 +153,6 @@ const getIntersectedObj = () => {
 
 let tween = null;
 const moveDollyTo = (dolly, pos, time) => {
-  console.log('Going to: '+pos.x+','+pos.y+','+pos.z);
   const tweenPos = {x: dolly.position.x, y: dolly.position.y, z: dolly.position.z};
   if (tween) {
     tween.stop();
@@ -189,12 +188,6 @@ const render = () => {
   }
 };
 
-const logPos = (name, obj) => {
-    console.log(name+' position: ',obj.position);
-    console.log(name+' rotation: ',obj.rotation);
-    console.log(name+' worldDir: ',obj.getWorldDirection());
-}
-
 const checkKeyboard = () => {
   const hspeed = 100;
   const vspeed = 100;
@@ -204,7 +197,7 @@ const checkKeyboard = () => {
   const lbounds = new THREE.Vector3(-1000, 0.5, -1000);
   const ubounds = new THREE.Vector3(1000, 200, 1000);
 
-  
+
 
 
   if (keyboard.pressed('W') || keyboard.pressed('up')) {
