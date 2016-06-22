@@ -101,7 +101,11 @@ const resizeWindow = (width, height) => {
 };
 
 const setClickListeners = () => {
-  const onClickEvent = (event) => {
+  const viewport = document.getElementById('viewport');
+  viewport.addEventListener('mousedown', clickHandler, false);
+}
+
+const clickHandler = (event) => {
     const menu = getIntersectedMenu();
     if (menu) {
       if (menu.name == 'MenuToggle') {
@@ -115,14 +119,10 @@ const setClickListeners = () => {
       } else {
         BimManager.toggleMaterial(menu);
       }
-    } else if (teleportOn && !onMenu && teleporter && (VRManager.mode == 3 || event.button == 2)) {
+    } else if (teleportOn && !onMenu && teleporter && (VRManager.mode == 3 || (event && event.button == 2))) {
       moveDollyTo(dolly, {x: teleporter.position.x, y: teleporter.position.y, z: teleporter.position.z}, 500);
-      event.stopPropagation();
-
+      if (event) event.stopPropagation();
     }
-  };
-  const viewport = document.getElementById('viewport');
-  viewport.addEventListener('mousedown', onClickEvent, false);
 }
 
 var lastRender = 0;
@@ -247,6 +247,9 @@ const checkKeyboard = () => {
   }
   if (keyboard.pressed('F') || keyboard.pressed(',')) {
     dolly.position.y -= vstep;
+  }
+  if (keyboard.pressed('space')) {
+    clickHandler(null);
   }
 
   dolly.position.clamp(lbounds, ubounds);
