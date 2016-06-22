@@ -3,7 +3,7 @@ html {
 }
 *, *:before, *:after {
   box-sizing: inherit;
-  /*transition: all 1.2s ease 0s;*/
+  transition: all 0.5s ease 0s;
 }
 
 body {
@@ -55,13 +55,44 @@ input[type=submit]:active,
 .content-main {
   display: inline-block;
   vertical-align: top;
-  width: 75%;
+  width: 100%;
 }
 
-.content-side {
+.side-menu {
   display: inline-block;
   vertical-align: top;
   width: 25%;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: #333333;
+}
+
+.side-menu-button {
+  border: 1px solid #6464fb;
+  cursor: pointer;
+  display: none;
+  margin: 5px;
+  width: 26px;
+}
+
+.side-menu-button:hover {
+  background-color: #00B7FF;
+}
+
+.side-menu-button span {
+  border-top: 3px solid #6464fb;
+  display: block;
+  width: 20px;
+  margin: 2px;
+}
+.side-menu-button span:before,
+.side-menu-button span:after {
+  content: "";
+  border-top: 3px solid #6464fb;
+  display: block;
+  width: 20px;
+  margin: 2px 0;
 }
 
 .upload-form {

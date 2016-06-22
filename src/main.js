@@ -41,7 +41,7 @@ const init = () => {
   const vertexShader = document.getElementById( 'vertexShader' ).textContent;
   const fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
   const skybox = WorldManager.createSkybox(fragmentShader, vertexShader);
-   ground = WorldManager.createGround();
+  ground = WorldManager.createGround();
   const lights = WorldManager.createLights();
 
   scene.add(dolly, skybox, ground, lights.hemiLight, lights.directionalLight);
@@ -54,9 +54,17 @@ const init = () => {
 
   toggleParent = Menu.createMenuToggle(dolly);
 
-  setResizeListeners();
+  // Set side menu height
+  const sideMenu = document.querySelectorAll('.side-menu')[0];
+  sideMenu.style.height = window.innerHeight-20 + 'px';
+  initResize();
   setClickListeners();
   requestAnimationFrame(animate);
+};
+
+const initResize = () => {
+  onWindowResize();
+  setResizeListeners();
 };
 
 const setResizeListeners = () => {
@@ -103,7 +111,8 @@ const setClickListeners = () => {
 
     }
   };
-  window.addEventListener('mousedown', onClickEvent, false);
+  const viewport = document.getElementById('viewport');
+  viewport.addEventListener('mousedown', onClickEvent, false);
 }
 
 var lastRender = 0;
@@ -257,24 +266,47 @@ const loadModel = (name) => {
   BimManager.loadModelToScene(name, scene, () => {
     //menuParent = Menu.createMenu(dolly, BimManager.getMaterials());
   });
+  toggleSideMenu();
 };
 
-const showUpload = () => {
-  var el = document.querySelectorAll('.upload-form')[0];
+const isDomElementHidden = (el) => {
+    const style = window.getComputedStyle(el);
+    return (style.display === 'none')
+}
+
+const showDom = (domSelector) => {
+  const el = document.querySelectorAll(domSelector)[0];
   el.style.display = 'block';
 };
 
-const hideUpload = () => {
-  var el = document.querySelectorAll('.upload-form')[0];
+const hideDom = (domSelector) => {
+  const el = document.querySelectorAll(domSelector)[0];
   el.style.display = 'none';
 };
 
-
+const toggleSideMenu = () => {
+  const sideMenu = document.querySelectorAll('.side-menu')[0];
+  const sideContent = document.querySelectorAll('.side-menu-content')[0];
+  if(isDomElementHidden(sideContent)) {
+    hideDom('.side-menu-button');
+    sideMenu.style.width = '25%';
+    sideMenu.style.height = window.innerHeight-20 +'px';
+    setTimeout(()=>{
+      showDom('.side-menu-content');
+    }, 500);
+  } else {
+    hideDom('.side-menu-content');
+    showDom('.side-menu-button');
+    sideMenu.style.width = '36px';
+    sideMenu.style.height = '29px';
+  }
+}
 
 window.onload = function() {
    init();
 };
 
 window.loadModel = loadModel;
-window.showUpload = showUpload;
-window.hideUpload = hideUpload;
+window.showDom = showDom;
+window.hideDom = hideDom;
+window.toggleSideMenu = toggleSideMenu;

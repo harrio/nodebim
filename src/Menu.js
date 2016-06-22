@@ -1,9 +1,11 @@
 /* global THREE */
 
+import * as Text from './Text';
+
 const yaxis = new THREE.Vector3(0, 1, 0);
 const zaxis = new THREE.Vector3(0, 0, 1);
 
-let menuParent, menuToggle, toggleParent;
+let menuParent, textParent, menuToggle, toggleParent;
 
 const createMenuToggle = (dolly) => {
   toggleParent = new THREE.Object3D();
@@ -21,9 +23,19 @@ const createMenuToggle = (dolly) => {
   return toggleParent;
 }
 
+const cleanMaterialName = (name) => {
+  const pos = name.indexOf('_');
+  if (pos != -1) {
+    return name.substring(pos + 1);
+  }
+  return name;
+}
+
 const createMenu = (dolly, camera, materials) => {
   dolly.remove(menuParent);
+  dolly.remove(textParent);
   menuParent = new THREE.Object3D();
+  textParent = new THREE.Object3D();
   let x = 0;
   let y = 0;
   for (let key in materials) {
@@ -35,21 +47,29 @@ const createMenu = (dolly, camera, materials) => {
     menuHandle.rotation.x = Math.PI / 180 * -45;
 
     menuHandle.position.x = 0.2 * x - 0.5;
-    menuHandle.position.y = 0.2 * y + 0.5;
+    menuHandle.position.y = 0.2 * y + 1;
     menuHandle.position.z = -1;
 
     menuParent.add(menuHandle);
+
+    let spritey = Text.makeTextSprite(cleanMaterialName(material.name), 48);
+   spritey.position.set(menuHandle.position.x, menuHandle.position.y + 0.07, menuHandle.position.z);
+    textParent.add(spritey);
+
     x = x < 4 ? x + 1 : 0;
     y = x == 0 ? y + 1 : y;
   }
 
   dolly.add(menuParent);
+  dolly.add(textParent);
   updateMenuPosition(camera, menuParent);
+  updateMenuPosition(camera, textParent);
   return menuParent;
 }
 
 const hideMenu = (dolly) => {
   dolly.remove(menuParent);
+  dolly.remove(textParent);
 }
 
 const updateMenuPosition = (camera, menu) => {
