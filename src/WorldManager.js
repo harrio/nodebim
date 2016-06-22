@@ -22,7 +22,7 @@ const createGround = () => {
 }
 
 const createLights = () => {
-  const hemiLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.7);
+  const hemiLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 1.5);
   hemiLight.name = 'hemiLight';
 
   const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
