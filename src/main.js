@@ -61,14 +61,24 @@ const init = () => {
 
 const setResizeListeners = () => {
   window.addEventListener('resize', onWindowResize, true);
-  window.addEventListener('vrdisplaypresentchange', onWindowResize, true);
+  window.addEventListener('vrdisplaypresentchange', onVRWindowResize, true);
 };
 
 const onWindowResize = () => {
   const width = document.getElementById('viewport').offsetWidth;
-  let height = window.innerHeight;
+  const height = window.innerHeight;
+  resizeWindow(width, height);
+};
+
+const onVRWindowResize = () => {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  resizeWindow(width, height);
+};
+
+const resizeWindow = (width, height) => {
   camera.aspect = width / height;
-  effect.setSize(width, height, false);
+  effect.setSize(width, height);
   camera.updateProjectionMatrix();
   renderer.setSize(width, height);
 };
@@ -212,18 +222,18 @@ const toggleNavigation = () => {
   if (teleportOn) {
     scene.remove(teleporter);
     teleporter = null;
-  } 
+  }
   teleportOn = !teleportOn;
 }
 
 const checkTeleport = () => {
-  scene.remove(teleporter);
-  teleporter = null;
+  if (!teleporter) {
+    teleporter = Teleporter.createTeleporter();
+    scene.add(teleporter);
+  }
 
   const obj = getIntersectedObj();
   if (obj && obj.point) {
-    teleporter = Teleporter.createTeleporter();
-    scene.add(teleporter);
     teleporter.position.set(obj.point.x, obj.point.y, obj.point.z);
   }
 }
