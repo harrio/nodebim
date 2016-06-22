@@ -48,7 +48,7 @@ const makeText = (message, renderer) => {
   var material = new THREE.RawShaderMaterial(createSDFShader({
     map: texture,
     side: THREE.DoubleSide,
-    transparent: true,
+    //transparent: true,
     color: 'rgb(230, 230, 230)'
   }))
 
