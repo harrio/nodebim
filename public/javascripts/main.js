@@ -81,14 +81,15 @@
 	var controls = new THREE.VRControls(camera);
 	var dolly = new THREE.Group();
 	var raycaster = new THREE.Raycaster();
-	var renderer = new THREE.WebGLRenderer({ antialias: true });
-	var effect = new THREE.VREffect(renderer);
 	var scene = new THREE.Scene();
 	var keyboard = new THREEx.KeyboardState();
 	
 	var teleportOn = false;
 	var onMenu = false;
 	var keyboardOn = true;
+	var renderer = void 0,
+	    canvas = void 0,
+	    effect = void 0;
 	
 	var beaconGroup = void 0,
 	    crosshair = void 0,
@@ -103,10 +104,10 @@
 	  crosshair = Navigator.initCrosshair();
 	  camera.add(crosshair);
 	
+	  canvas = document.getElementById('viewportCanvas');
+	  renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
 	  renderer.setPixelRatio(window.devicePixelRatio);
-	
-	  var container = document.getElementById('viewport');
-	  container.appendChild(renderer.domElement);
+	  effect = new THREE.VREffect(renderer);
 	
 	  controls.standing = true;
 	
@@ -140,16 +141,18 @@
 	};
 	
 	var onWindowResize = function onWindowResize() {
-	  camera.aspect = window.innerWidth / window.innerHeight;
-	  effect.setSize(window.innerWidth, window.innerHeight);
+	  var width = document.getElementById('viewport').offsetWidth;
+	  var height = window.innerHeight;
+	  camera.aspect = width / height;
+	  effect.setSize(width, height, false);
 	  camera.updateProjectionMatrix();
+	  renderer.setSize(width, height);
 	};
 	
 	var setClickListeners = function setClickListeners() {
 	  var onClickEvent = function onClickEvent() {
 	    if (teleportOn && !onMenu && teleporter) {
 	      dolly.position.set(teleporter.position.x, teleporter.position.y, teleporter.position.z);
-	      console.log('Dolly: ' + dolly.position.x + ',' + dolly.position.y + ',' + dolly.position.z);
 	    }
 	  };
 	  window.addEventListener('mousedown', onClickEvent, false);
@@ -221,7 +224,6 @@
 	  });
 	
 	  tween.onComplete(function () {
-	    console.log('Dolly: ' + dolly.position.x + ',' + dolly.position.y + ',' + dolly.position.z);
 	    tween = null;
 	  });
 	
@@ -1704,6 +1706,16 @@
 	  sphere.position.y = y;
 	  material.depthTest = false;
 	  return sphere;
+	};
+	
+	var _createArrow = function _createArrow() {
+	  var geometry = new THREE.Geometry();
+	
+	  geometry.vertices.push(new THREE.Vector3(-10, 10, 0), new THREE.Vector3(-10, -10, 0), new THREE.Vector3(10, -10, 0));
+	
+	  geometry.faces.push(new THREE.Face3(0, 1, 2));
+	
+	  geometry.computeBoundingSphere();
 	};
 	
 	var initCrosshair = function initCrosshair() {
