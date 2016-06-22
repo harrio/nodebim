@@ -108,7 +108,8 @@ const setClickListeners = () => {
 
     }
   };
-  window.addEventListener('mousedown', onClickEvent, false);
+  const viewport = document.getElementById('viewport');
+  viewport.addEventListener('mousedown', onClickEvent, false);
 }
 
 var lastRender = 0;
