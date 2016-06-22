@@ -13,17 +13,15 @@ const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerH
 const controls = new THREE.VRControls(camera);
 const dolly = new THREE.Group();
 const raycaster  = new THREE.Raycaster();
-const renderer = new THREE.WebGLRenderer({antialias:true});
-const effect = new THREE.VREffect(renderer);
 const scene = new THREE.Scene();
 const keyboard = new THREEx.KeyboardState();
 
-let teleportOn = false;
+let teleportOn = true;
 let onMenu = false;
 let keyboardOn = true;
+let renderer, canvas, effect;
 
-
-let beaconGroup, crosshair, VRManager, menuParent, teleporter, ground;
+let crosshair, VRManager, menuParent, toggleParent, teleporter, ground;
 
 const init = () => {
   camera.position.set(0, 5, 10);
@@ -31,18 +29,14 @@ const init = () => {
   crosshair = Navigator.initCrosshair();
   camera.add(crosshair);
 
+  canvas = document.getElementById('viewportCanvas');
+  renderer = new THREE.WebGLRenderer({canvas: canvas, antialias:true});
   renderer.setPixelRatio(window.devicePixelRatio);
-
-  const container = document.getElementById('viewport');
-  container.appendChild(renderer.domElement);
+  effect = new THREE.VREffect(renderer);
 
   controls.standing = true;
 
   dolly.add(camera);
-
-  menuParent = Menu.createMenu(dolly);
-
-  beaconGroup = Navigator.createBeacons();
 
   const vertexShader = document.getElementById( 'vertexShader' ).textContent;
   const fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
@@ -50,7 +44,7 @@ const init = () => {
    ground = WorldManager.createGround();
   const lights = WorldManager.createLights();
 
-  scene.add(dolly, beaconGroup, skybox, ground, lights.hemiLight, lights.directionalLight);
+  scene.add(dolly, skybox, ground, lights.hemiLight, lights.directionalLight);
 
 
   effect.setSize(window.innerWidth, window.innerHeight);
@@ -58,6 +52,7 @@ const init = () => {
 
   BimManager.loadEnvironment('nyc.js', scene);
 
+  toggleParent = Menu.createMenuToggle(dolly);
 
   setResizeListeners();
   setClickListeners();
@@ -70,16 +65,31 @@ const setResizeListeners = () => {
 };
 
 const onWindowResize = () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  effect.setSize(window.innerWidth, window.innerHeight);
+  const width = document.getElementById('viewport').offsetWidth;
+  let height = window.innerHeight;
+  camera.aspect = width / height;
+  effect.setSize(width, height, false);
   camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
 };
 
 const setClickListeners = () => {
   const onClickEvent = () => {
-    if (teleportOn && !onMenu && teleporter) {
+    const menu = getIntersectedMenu();
+    if (menu) {
+      if (menu.name == 'MenuToggle') {
+        if (menuParent) {
+          Menu.hideMenu(dolly);
+          menuParent = null;
+        } else {
+          menuParent = Menu.createMenu(dolly, camera, BimManager.getMaterials());
+        }
+        toggleNavigation();
+      } else {
+        BimManager.toggleMaterial(menu);
+      }
+    } else if (teleportOn && !onMenu && teleporter) {
       dolly.position.set(teleporter.position.x, teleporter.position.y, teleporter.position.z);
-      console.log('Dolly: ' + dolly.position.x + ',' + dolly.position.y + ',' + dolly.position.z);
     }
   };
   window.addEventListener('mousedown', onClickEvent, false);
@@ -95,18 +105,9 @@ const animate = (timestamp) => {
   VRManager.render(scene, camera, timestamp, function() {});
 };
 
-const getIntersectedBeacon = () => {
-  raycaster.setFromCamera( { x: 0, y: 0 }, camera );
-  const intersects = raycaster.intersectObjects(beaconGroup.children);
-  if (intersects.length < 1) {
-    return null;
-  }
-  return intersects[0].object;
-};
-
 const getIntersectedMenu = () => {
   raycaster.setFromCamera( { x: 0, y: 0 }, camera );
-  const intersects = raycaster.intersectObjects(menuParent.children);
+  const intersects = menuParent ? raycaster.intersectObjects(menuParent.children.concat(toggleParent.children)) : raycaster.intersectObjects(toggleParent.children);
   if (intersects.length < 1) {
     return null;
   }
@@ -122,38 +123,20 @@ const getIntersectedObj = () => {
   return intersects[0];
 };
 
-const setBeaconHighlight = (beacon) => {
-  beacon.material.color.setHex(0x00ff00);
-};
-
-const removeBeaconHighlight = (beacon) => {
-  beacon.material.color.setHex(0xff0000);
-  beacon.timestamp = null;
-};
-
-const moveDollyToBeaconPosition = (dolly, intersectedBeacon) => {
-  moveDollyTo(dolly, {
-    x: intersectedBeacon.position.x,
-    y: intersectedBeacon.position.y-1,
-    z: intersectedBeacon.position.z}, 
-    1000);
-};
-
 let tween = null;
 const moveDollyTo = (dolly, pos, time) => {
   const tweenPos = {x: dolly.position.x, y: dolly.position.y, z: dolly.position.z};
   if (tween) {
     tween.stop();
-  } 
+  }
   tween = new TWEEN.Tween(tweenPos).to(pos, time);
-  
+
 
   tween.onUpdate(() => {
     dolly.position.set(tweenPos.x, tweenPos.y, tweenPos.z);
   });
 
   tween.onComplete(function() {
-    console.log('Dolly: ' + dolly.position.x + ',' + dolly.position.y + ',' + dolly.position.z);
     tween = null;
   });
 
@@ -161,17 +144,11 @@ const moveDollyTo = (dolly, pos, time) => {
   tween.start();
 }
 
-
-let intersectedBeacon = null;
-
 const render = () => {
-  Menu.updateMenuPosition(camera, menuParent);
+  Menu.updateMenuPosition(camera, toggleParent);
 
-  checkMenu();
   if (teleportOn) {
     checkTeleport();
-  } else {
-    checkBeacon();
   }
 
   if (keyboardOn) {
@@ -195,12 +172,12 @@ const checkKeyboard = () => {
 
   if (keyboard.pressed('W')) {
     //alignDollyTo(camera.getWorldDirection());
-    dolly.translateZ(-hstep); 
+    dolly.translateZ(-hstep);
   }
 
   if (keyboard.pressed('S')) {
     //alignDollyTo(camera.getWorldDirection());
-    dolly.translateZ(hstep); 
+    dolly.translateZ(hstep);
   }
 
   if (keyboard.pressed('A')) {
@@ -229,16 +206,12 @@ const alignDollyTo = (vec) => {
   //dolly.quaternion.setFromUnitVectors(axis, vec.clone().normalize());
 }
 
-const checkMenu = () => {
-  const obj = getIntersectedMenu();
-  if (obj) {
-    if (!onMenu) {
-      toggleNavigation();
-    }
-    onMenu = true;
-  } else {
-    onMenu = false;
-  }
+const toggleNavigation = () => {
+  if (teleportOn) {
+    scene.remove(teleporter);
+    teleporter = null;
+  } 
+  teleportOn = !teleportOn;
 }
 
 const checkTeleport = () => {
@@ -253,47 +226,10 @@ const checkTeleport = () => {
   }
 }
 
-const checkBeacon = () => {
-  const obj = getIntersectedBeacon();
-
-  if (!obj || tween) { // clear previous highlight if any and reset timer
-    if (intersectedBeacon) {
-      removeBeaconHighlight(intersectedBeacon);
-    }
-    intersectedBeacon = null;
-    crosshair.material = Navigator.createCrosshairMaterial(0xffffff);
-  } else {
-       if (intersectedBeacon && intersectedBeacon != obj) { // clear previous highlight
-          removeBeaconHighlight(intersectedBeacon);
-       }
-       // highlight crosshair and beacon and start stare timer
-       crosshair.material = Navigator.createCrosshairMaterial(0x00ffff);
-       intersectedBeacon = obj;
-       setBeaconHighlight(intersectedBeacon);
-       if (!intersectedBeacon.timestamp) intersectedBeacon.timestamp = Date.now();
-
-       if (Date.now() - intersectedBeacon.timestamp > 1000) { // 1 second stare duration
-         crosshair.material = Navigator.createCrosshairMaterial(0xffffff);
-         removeBeaconHighlight(intersectedBeacon);
-         moveDollyToBeaconPosition(dolly, intersectedBeacon);
-       }
-  }
-
-}
-
-const toggleNavigation = () => {
-  if (teleportOn) {
-    scene.remove(teleporter);
-    teleporter = null;
-    scene.add(beaconGroup);
-  } else {
-    scene.remove(beaconGroup);
-  }
-  teleportOn = !teleportOn;
-}
-
 const loadModel = (name) => {
-  BimManager.loadModelToScene(name, scene);
+  BimManager.loadModelToScene(name, scene, () => {
+    //menuParent = Menu.createMenu(dolly, BimManager.getMaterials());
+  });
 };
 
 const showUpload = () => {

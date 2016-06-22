@@ -8,23 +8,31 @@ const loader = new THREE.JSONLoader(manager);
 const envLoader = new THREE.OBJLoader(manager);
 
 let object;
+let objMaterials = {};
+let oldOpacities = {}
 let environment;
 
-const addObject = (scene) => {
+const addObject = (scene, callback) => {
   return (geometry, materials) => {
     geometry.mergeVertices();
-    object = new THREE.Mesh( geometry, new THREE.MultiMaterial( materials ) );
+    object = new THREE.Mesh(geometry, new THREE.MultiMaterial(materials));
     object.rotation.x = -Math.PI/2;
     scene.add(object);
+    object.material.materials.forEach((m) => {
+      objMaterials[m.name] = m;
+    });
+    callback();
   }
 }
 
-const loadModelToScene = (name, scene) => {
+const loadModelToScene = (name, scene, callback) => {
+  objMaterials = {};
+  oldOpacities = {}
   scene.remove(object);
   // load a resource
   loader.load(
       name,
-      addObject(scene)
+      addObject(scene, callback)
   );
 }
 
@@ -61,10 +69,28 @@ const getObject = () => {
   }
 }
 
+const getMaterials = () => {
+  return objMaterials;
+}
+
+const toggleMaterial = (materialHolder) => {
+  const material = materialHolder.material;
+  if (material.name in oldOpacities) {
+    material.transparent = false;
+    material.opacity = oldOpacities[material.name];
+    delete oldOpacities[material.name];
+  } else {
+    oldOpacities[material.name] = material.opacity;
+    material.transparent = true;
+    material.opacity = 0.3;
+  }
+}
 
 export {
   loadModelToScene,
   loadEnvironment,
   getEnvironment,
-  getObject
+  getObject,
+  getMaterials,
+  toggleMaterial
 }
