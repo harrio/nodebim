@@ -11,12 +11,11 @@ const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerH
 const controls = new THREE.VRControls(camera);
 const dolly = new THREE.Group();
 const raycaster  = new THREE.Raycaster();
-const renderer = new THREE.WebGLRenderer({antialias:true});
-const effect = new THREE.VREffect(renderer);
 const scene = new THREE.Scene();
 
 let teleportOn = false;
 let onMenu = false;
+let renderer, canvas, effect;
 
 let beaconGroup, crosshair, VRManager, menuParent, teleporter, ground;
 
@@ -26,10 +25,10 @@ const init = () => {
   crosshair = Navigator.initCrosshair();
   camera.add(crosshair);
 
+  canvas = document.getElementById('viewportCanvas');
+  renderer = new THREE.WebGLRenderer({canvas: canvas, antialias:true});
   renderer.setPixelRatio(window.devicePixelRatio);
-
-  const container = document.getElementById('viewport');
-  container.appendChild(renderer.domElement);
+  effect = new THREE.VREffect(renderer);
 
   controls.standing = true;
 
@@ -62,18 +61,21 @@ const setResizeListeners = () => {
 };
 
 const onWindowResize = () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  effect.setSize(window.innerWidth, window.innerHeight);
+  const width = document.getElementById('viewport').offsetWidth;
+  let height = window.innerHeight;
+  camera.aspect = width / height;
+  effect.setSize(width, height, false);
   camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
 };
 
 const setClickListeners = () => {
-  const onClickEvent = (event) => {
+  const onClickEvent = () => {
     if (teleportOn && !onMenu && teleporter) {
       dolly.position.set(teleporter.position.x, teleporter.position.y, teleporter.position.z);
     }
   };
-  window.addEventListener("mousedown", onClickEvent, false);
+  window.addEventListener('mousedown', onClickEvent, false);
 }
 
 var lastRender = 0;

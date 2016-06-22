@@ -30,6 +30,20 @@ const _createSphere = (x,y,z) => {
     return sphere;
 };
 
+const _createArrow = () => {
+var geometry = new THREE.Geometry();
+
+geometry.vertices.push(
+  new THREE.Vector3( -10,  10, 0 ),
+  new THREE.Vector3( -10, -10, 0 ),
+  new THREE.Vector3(  10, -10, 0 )
+);
+
+geometry.faces.push( new THREE.Face3( 0, 1, 2 ) );
+
+geometry.computeBoundingSphere();
+};
+
 const initCrosshair = () => {
   const crosshair = new THREE.Mesh(
           new THREE.RingGeometry( 0.02, 0.04, 32 )

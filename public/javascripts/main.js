@@ -50,15 +50,23 @@
 	
 	var _tween2 = _interopRequireDefault(_tween);
 	
-	var _BimManager = __webpack_require__(4);
+	var _BimManager = __webpack_require__(2);
 	
 	var BimManager = _interopRequireWildcard(_BimManager);
 	
-	var _Navigator = __webpack_require__(2);
+	var _Navigator = __webpack_require__(3);
 	
 	var Navigator = _interopRequireWildcard(_Navigator);
 	
-	var _WorldManager = __webpack_require__(3);
+	var _Teleporter = __webpack_require__(4);
+	
+	var Teleporter = _interopRequireWildcard(_Teleporter);
+	
+	var _Menu = __webpack_require__(5);
+	
+	var Menu = _interopRequireWildcard(_Menu);
+	
+	var _WorldManager = __webpack_require__(6);
 	
 	var WorldManager = _interopRequireWildcard(_WorldManager);
 	
@@ -73,13 +81,20 @@
 	var controls = new THREE.VRControls(camera);
 	var dolly = new THREE.Group();
 	var raycaster = new THREE.Raycaster();
-	var renderer = new THREE.WebGLRenderer({ antialias: true });
-	var effect = new THREE.VREffect(renderer);
 	var scene = new THREE.Scene();
+	
+	var teleportOn = false;
+	var onMenu = false;
+	var renderer = void 0,
+	    canvas = void 0,
+	    effect = void 0;
 	
 	var beaconGroup = void 0,
 	    crosshair = void 0,
-	    VRManager = void 0;
+	    VRManager = void 0,
+	    menuParent = void 0,
+	    teleporter = void 0,
+	    ground = void 0;
 	
 	var init = function init() {
 	  camera.position.set(0, 5, 10);
@@ -87,21 +102,23 @@
 	  crosshair = Navigator.initCrosshair();
 	  camera.add(crosshair);
 	
+	  canvas = document.getElementById('viewportCanvas');
+	  renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
 	  renderer.setPixelRatio(window.devicePixelRatio);
-	
-	  var container = document.getElementById('viewport');
-	  container.appendChild(renderer.domElement);
+	  effect = new THREE.VREffect(renderer);
 	
 	  controls.standing = true;
 	
 	  dolly.add(camera);
+	
+	  menuParent = Menu.createMenu(dolly);
 	
 	  beaconGroup = Navigator.createBeacons();
 	
 	  var vertexShader = document.getElementById('vertexShader').textContent;
 	  var fragmentShader = document.getElementById('fragmentShader').textContent;
 	  var skybox = WorldManager.createSkybox(fragmentShader, vertexShader);
-	  var ground = WorldManager.createGround();
+	  ground = WorldManager.createGround();
 	  var lights = WorldManager.createLights();
 	
 	  scene.add(dolly, beaconGroup, skybox, ground, lights.hemiLight, lights.directionalLight);
@@ -110,6 +127,7 @@
 	  VRManager = new WebVRManager(renderer, effect);
 	
 	  setResizeListeners();
+	  setClickListeners();
 	  requestAnimationFrame(animate);
 	};
 	
@@ -119,9 +137,21 @@
 	};
 	
 	var onWindowResize = function onWindowResize() {
-	  camera.aspect = window.innerWidth / window.innerHeight;
-	  effect.setSize(window.innerWidth, window.innerHeight);
+	  var width = document.getElementById('viewport').offsetWidth;
+	  var height = window.innerHeight;
+	  camera.aspect = width / height;
+	  effect.setSize(width, height, false);
 	  camera.updateProjectionMatrix();
+	  renderer.setSize(width, height);
+	};
+	
+	var setClickListeners = function setClickListeners() {
+	  var onClickEvent = function onClickEvent() {
+	    if (teleportOn && !onMenu && teleporter) {
+	      dolly.position.set(teleporter.position.x, teleporter.position.y, teleporter.position.z);
+	    }
+	  };
+	  window.addEventListener('mousedown', onClickEvent, false);
 	};
 	
 	var lastRender = 0;
@@ -141,6 +171,24 @@
 	    return null;
 	  }
 	  return intersects[0].object;
+	};
+	
+	var getIntersectedMenu = function getIntersectedMenu() {
+	  raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+	  var intersects = raycaster.intersectObjects(menuParent.children);
+	  if (intersects.length < 1) {
+	    return null;
+	  }
+	  return intersects[0].object;
+	};
+	
+	var getIntersectedObj = function getIntersectedObj() {
+	  raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+	  var intersects = raycaster.intersectObjects([ground, BimManager.getObject()]);
+	  if (intersects.length < 1) {
+	    return null;
+	  }
+	  return intersects[0];
 	};
 	
 	var setBeaconHighlight = function setBeaconHighlight(beacon) {
@@ -173,7 +221,47 @@
 	};
 	
 	var intersectedBeacon = null;
+	
 	var render = function render() {
+	  Menu.updateMenuPosition(camera, menuParent);
+	
+	  checkMenu();
+	  if (teleportOn) {
+	    checkTeleport();
+	  } else {
+	    checkBeacon();
+	  }
+	
+	  if (tween) {
+	    _tween2.default.update();
+	  }
+	};
+	
+	var checkMenu = function checkMenu() {
+	  var obj = getIntersectedMenu();
+	  if (obj) {
+	    if (!onMenu) {
+	      toggleNavigation();
+	    }
+	    onMenu = true;
+	  } else {
+	    onMenu = false;
+	  }
+	};
+	
+	var checkTeleport = function checkTeleport() {
+	  scene.remove(teleporter);
+	  teleporter = null;
+	
+	  var obj = getIntersectedObj();
+	  if (obj && obj.point) {
+	    teleporter = Teleporter.createTeleporter();
+	    scene.add(teleporter);
+	    teleporter.position.set(obj.point.x, obj.point.y, obj.point.z);
+	  }
+	};
+	
+	var checkBeacon = function checkBeacon() {
 	  var obj = getIntersectedBeacon();
 	
 	  if (!obj || tween) {
@@ -194,17 +282,24 @@
 	    setBeaconHighlight(intersectedBeacon);
 	    if (!intersectedBeacon.timestamp) intersectedBeacon.timestamp = Date.now();
 	
-	    if (Date.now() - intersectedBeacon.timestamp > 2000) {
-	      // 2 second stare duration
+	    if (Date.now() - intersectedBeacon.timestamp > 1000) {
+	      // 1 second stare duration
 	      crosshair.material = Navigator.createCrosshairMaterial(0xffffff);
 	      removeBeaconHighlight(intersectedBeacon);
 	      moveDollyToBeaconPosition(dolly, intersectedBeacon);
 	    }
 	  }
+	};
 	
-	  if (tween) {
-	    _tween2.default.update();
+	var toggleNavigation = function toggleNavigation() {
+	  if (teleportOn) {
+	    scene.remove(teleporter);
+	    teleporter = null;
+	    scene.add(beaconGroup);
+	  } else {
+	    scene.remove(beaconGroup);
 	  }
+	  teleportOn = !teleportOn;
 	};
 	
 	var loadModel = function loadModel(name) {
@@ -1136,8 +1231,51 @@
 	});
 	/* global THREE */
 	
+	var manager = new THREE.LoadingManager();
+	var loader = new THREE.JSONLoader(manager);
+	
+	var object = void 0;
+	
+	var addObject = function addObject(scene) {
+	  return function (geometry, materials) {
+	    geometry.mergeVertices();
+	    object = new THREE.Mesh(geometry, new THREE.MultiMaterial(materials));
+	    object.rotation.x = -Math.PI / 2;
+	    scene.add(object);
+	  };
+	};
+	
+	var loadModelToScene = function loadModelToScene(name, scene) {
+	  scene.remove(object);
+	  // load a resource
+	  loader.load(name, addObject(scene));
+	};
+	
+	var getObject = function getObject() {
+	  if (object) {
+	    return object;
+	  } else {
+	    return new THREE.Object3D();
+	  }
+	};
+	
+	exports.loadModelToScene = loadModelToScene;
+	exports.getObject = getObject;
+
+/***/ },
+/* 3 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	/* global THREE */
+	
+	var group = new THREE.Group();
+	
 	var createBeacons = function createBeacons() {
-	  var group = new THREE.Group();
 	
 	  for (var i = -15; i < 25; i++) {
 	    for (var j = -15; j < 25; j++) {
@@ -1164,6 +1302,16 @@
 	  return sphere;
 	};
 	
+	var _createArrow = function _createArrow() {
+	  var geometry = new THREE.Geometry();
+	
+	  geometry.vertices.push(new THREE.Vector3(-10, 10, 0), new THREE.Vector3(-10, -10, 0), new THREE.Vector3(10, -10, 0));
+	
+	  geometry.faces.push(new THREE.Face3(0, 1, 2));
+	
+	  geometry.computeBoundingSphere();
+	};
+	
 	var initCrosshair = function initCrosshair() {
 	  var crosshair = new THREE.Mesh(new THREE.RingGeometry(0.02, 0.04, 32));
 	  crosshair.material = createCrosshairMaterial(0xffffff);
@@ -1186,7 +1334,90 @@
 	exports.createCrosshairMaterial = createCrosshairMaterial;
 
 /***/ },
-/* 3 */
+/* 4 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	/* global THREE */
+	
+	var _createCone = function _createCone(x, y, z) {
+	  var geometry = new THREE.CylinderGeometry(0.5, 0.5, 4, 8, 8);
+	  var material = new THREE.MeshBasicMaterial({
+	    color: 0xffff00,
+	    opacity: 0.4,
+	    transparent: true
+	  });
+	  var cone = new THREE.Mesh(geometry, material);
+	  cone.position.x = x;
+	  cone.position.z = z;
+	  cone.position.y = y;
+	  return cone;
+	};
+	
+	var createTeleporter = function createTeleporter() {
+	  return _createCone(0, 0, 0);
+	};
+	
+	exports.createTeleporter = createTeleporter;
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	/* global THREE */
+	
+	var yaxis = new THREE.Vector3(0, 1, 0);
+	var zaxis = new THREE.Vector3(0, 0, 1);
+	
+	var createMenu = function createMenu(dolly) {
+	  var menuParent = new THREE.Object3D();
+	
+	  var geometry = new THREE.PlaneGeometry(0.2, 0.2);
+	  var material = new THREE.MeshLambertMaterial({ color: 0xff0000, side: THREE.OneSide });
+	  var menuHandle = new THREE.Mesh(geometry, material);
+	  menuHandle.rotation.x = Math.PI / 180 * -45;
+	
+	  menuHandle.position.z = -0.5;
+	  menuHandle.position.y = 1;
+	
+	  menuParent.add(menuHandle);
+	
+	  dolly.add(menuParent);
+	  return menuParent;
+	};
+	
+	var updateMenuPosition = function updateMenuPosition(camera, menuParent) {
+	  var direction = zaxis.clone();
+	  // Apply the camera's quaternion onto the unit vector of one of the axes
+	  // of our desired rotation plane (the z axis of the xz plane, in this case).
+	  direction.applyQuaternion(camera.quaternion);
+	  // Project the direction vector onto the y axis to get the y component
+	  // of the direction.
+	  var ycomponent = yaxis.clone().multiplyScalar(direction.dot(yaxis));
+	  // Subtract the y component from the direction vector so that we are
+	  // left with the x and z components.
+	  direction.sub(ycomponent);
+	  // Normalize the direction into a unit vector again.
+	  direction.normalize();
+	  // Set the pivot's quaternion to the rotation required to get from the z axis
+	  // to the xz component of the camera's direction.
+	  menuParent.quaternion.setFromUnitVectors(zaxis, direction);
+	};
+	
+	exports.createMenu = createMenu;
+	exports.updateMenuPosition = updateMenuPosition;
+
+/***/ },
+/* 6 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -1234,39 +1465,6 @@
 	exports.createGround = createGround;
 	exports.createLights = createLights;
 	exports.createSkybox = createSkybox;
-
-/***/ },
-/* 4 */
-/***/ function(module, exports) {
-
-	"use strict";
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	/* global THREE */
-	
-	var manager = new THREE.LoadingManager();
-	var loader = new THREE.JSONLoader(manager);
-	
-	var object = void 0;
-	
-	var addObject = function addObject(scene) {
-	  return function (geometry, materials) {
-	    geometry.mergeVertices();
-	    object = new THREE.Mesh(geometry, new THREE.MultiMaterial(materials));
-	    object.rotation.x = -Math.PI / 2;
-	    scene.add(object);
-	  };
-	};
-	
-	var loadModelToScene = function loadModelToScene(name, scene) {
-	  scene.remove(object);
-	  // load a resource
-	  loader.load(name, addObject(scene));
-	};
-	
-	exports.loadModelToScene = loadModelToScene;
 
 /***/ }
 /******/ ]);
