@@ -16,7 +16,7 @@ const createMenuToggle = (dolly) => {
   menuToggle.position.z = -0.5;
   menuToggle.position.y = 1;
 
-  menuToggle.name = "MenuToggle";
+  menuToggle.name = 'MenuToggle';
 
   toggleParent.add(menuToggle);
   dolly.add(toggleParent);

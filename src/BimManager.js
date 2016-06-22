@@ -15,7 +15,7 @@ let environment;
 const addObject = (scene, callback) => {
   return (geometry, materials) => {
     geometry.mergeVertices();
-    object = new THREE.Mesh(geometry, new THREE.MultiMaterial(materials));
+    object = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(geometry), new THREE.MultiMaterial(materials));
     object.rotation.x = -Math.PI/2;
     scene.add(object);
     object.material.materials.forEach((m) => {
@@ -42,10 +42,10 @@ const loadEnvironment = (name, scene) => {
   loader.load(
     name, (geometry, materials) => {
       geometry.mergeVertices();
-      environment = new THREE.Mesh( geometry, new THREE.MultiMaterial( materials ) );
-      environment.position.x = 44;
-      environment.position.y = 0.1;
-      environment.position.z = 180;
+      environment = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(geometry), new THREE.MultiMaterial( materials ) );
+      environment.position.x = 0;
+      environment.position.y = -10;
+      environment.position.z = 0;
 
       scene.add(environment);
    });
