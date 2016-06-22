@@ -44,7 +44,7 @@ const loadEnvironment = (name, scene) => {
       geometry.mergeVertices();
       environment = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(geometry), new THREE.MultiMaterial( materials ) );
       environment.position.x = 0;
-      environment.position.y = -10;
+      environment.position.y = 0.01;
       environment.position.z = 0;
 
       scene.add(environment);

@@ -84,7 +84,7 @@ const resizeWindow = (width, height) => {
 };
 
 const setClickListeners = () => {
-  const onClickEvent = () => {
+  const onClickEvent = (event) => {
     const menu = getIntersectedMenu();
     if (menu) {
       if (menu.name == 'MenuToggle') {
@@ -98,7 +98,7 @@ const setClickListeners = () => {
       } else {
         BimManager.toggleMaterial(menu);
       }
-    } else if (teleportOn && !onMenu && teleporter) {
+    } else if (teleportOn && !onMenu && teleporter && (VRManager.mode == 3 || event.button == 2)) {
       moveDollyTo(dolly, {x: teleporter.position.x, y: teleporter.position.y, z: teleporter.position.z}, 500);
 
     }
@@ -172,6 +172,13 @@ const render = () => {
   }
 };
 
+const logPos = (name, obj) => {
+    console.log(name+" position: ",obj.position);
+    console.log(name+" rotation: ",obj.rotation);
+    console.log(name+" worldDir: ",obj.getWorldDirection());
+
+}
+
 const checkKeyboard = () => {
   const hspeed = 100;
   const vspeed = 100;
@@ -181,15 +188,21 @@ const checkKeyboard = () => {
   const lbounds = new THREE.Vector3(-1000, 0.5, -1000);
   const ubounds = new THREE.Vector3(1000, 200, 1000);
 
+  
+
 
   if (keyboard.pressed('W') || keyboard.pressed('up')) {
-    //alignDollyTo(camera.getWorldDirection());
-    dolly.translateZ(-hstep);
+    let cwd = camera.getWorldDirection();
+
+    dolly.position.x += cwd.x*hstep;
+    dolly.position.z += cwd.z*hstep;
   }
 
   if (keyboard.pressed('S') || keyboard.pressed('down')) {
-    //alignDollyTo(camera.getWorldDirection());
-    dolly.translateZ(hstep);
+    let cwd = camera.getWorldDirection();
+
+    dolly.position.x += cwd.x* (-hstep);
+    dolly.position.z += cwd.z* (-hstep);
   }
 
   if (keyboard.pressed('A') || keyboard.pressed('left')) {
@@ -201,21 +214,23 @@ const checkKeyboard = () => {
   }
 
   if (keyboard.pressed('R') || keyboard.pressed('.')) {
-    dolly.translateY(vstep);
+    dolly.position.y += vstep;
 
   }
   if (keyboard.pressed('F') || keyboard.pressed(',')) {
-    dolly.translateY(-vstep);
+    dolly.position.y -= vstep;
   }
 
   dolly.position.clamp(lbounds, ubounds);
 
 }
 
-const alignDollyTo = (vec) => {
-  dolly.lookAt(new THREE.Vector3(0, vec.y, 0));
-  //const axis = new THREE.Vector3(0, 1, 0);
-  //dolly.quaternion.setFromUnitVectors(axis, vec.clone().normalize());
+const alignDollyToCamera = () => {
+  console.log(dolly.getWorldRotation());
+  console.log(camera.rotation);  
+  
+  dolly.quaternion.setFromEuler(new THREE.Euler(0, camera.getWorldRotation().y, 0, 'XYZ'));
+
 }
 
 const toggleNavigation = () => {
