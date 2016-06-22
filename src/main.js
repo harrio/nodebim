@@ -101,32 +101,38 @@ const resizeWindow = (width, height) => {
 };
 
 const setClickListeners = () => {
-  const onClickEvent = (event) => {
+  const viewport = document.getElementById('viewport');
+  viewport.addEventListener('mousedown', clickHandler, false);
+}
+
+const clickHandler = (event) => {
     const menu = getIntersectedMenu();
     if (menu) {
       if (menu.name == 'MenuToggle') {
-        if (menuParent) {
-          Menu.hideMenu(dolly);
-          menuParent = null;
-        } else {
-          menuParent = Menu.createMenu(dolly, camera, renderer, BimManager.getMaterials());
-        }
-        toggleNavigation();
+        toggleMenu();
       } else {
         BimManager.toggleMaterial(menu);
       }
-    } else if (teleportOn && !onMenu && teleporter && (VRManager.mode == 3 || event.button == 2)) {
+    } else if (teleportOn && !onMenu && teleporter && (VRManager.mode == 3 || (event && event.button == 2))) {
       moveDollyTo(dolly, {x: teleporter.position.x, y: teleporter.position.y, z: teleporter.position.z}, 500);
-      event.stopPropagation();
-
+      if (event) event.stopPropagation();
     }
-  };
-  const viewport = document.getElementById('viewport');
-  viewport.addEventListener('mousedown', onClickEvent, false);
+}
+
+
+const toggleMenu = () => {
+    if (menuParent) {
+      Menu.hideMenu(dolly);
+      menuParent = null;
+    } else {
+      menuParent = Menu.createMenu(dolly, camera, renderer, BimManager.getMaterials());
+    }
+    toggleNavigation();
 }
 
 var lastRender = 0;
 const animate = (timestamp) => {
+
   requestAnimationFrame(animate);
   lastRender = timestamp;
   controls.update();
@@ -247,6 +253,9 @@ const checkKeyboard = () => {
   }
   if (keyboard.pressed('F') || keyboard.pressed(',')) {
     dolly.position.y -= vstep;
+  }
+  if (keyboard.pressed('space')) {
+    toggleMenu();
   }
 
   dolly.position.clamp(lbounds, ubounds);

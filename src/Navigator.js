@@ -49,7 +49,7 @@ const initCrosshair = () => {
           new THREE.RingGeometry( 0.02, 0.04, 32 )
         );
   crosshair.material = createCrosshairMaterial(0xffffff);
-  crosshair.position.z = - 2;
+  crosshair.position.z = - 1;
   return crosshair;
 };
 
