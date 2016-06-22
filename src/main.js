@@ -61,14 +61,24 @@ const init = () => {
 
 const setResizeListeners = () => {
   window.addEventListener('resize', onWindowResize, true);
-  window.addEventListener('vrdisplaypresentchange', onWindowResize, true);
+  window.addEventListener('vrdisplaypresentchange', onVRWindowResize, true);
 };
 
 const onWindowResize = () => {
   const width = document.getElementById('viewport').offsetWidth;
-  let height = window.innerHeight;
+  const height = window.innerHeight;
+  resizeWindow(width, height);
+};
+
+const onVRWindowResize = () => {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  resizeWindow(width, height);
+};
+
+const resizeWindow = (width, height) => {
   camera.aspect = width / height;
-  effect.setSize(width, height, false);
+  effect.setSize(width, height);
   camera.updateProjectionMatrix();
   renderer.setSize(width, height);
 };
