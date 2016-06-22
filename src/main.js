@@ -50,7 +50,7 @@ const init = () => {
   effect.setSize(window.innerWidth, window.innerHeight);
   VRManager = new WebVRManager(renderer, effect);
 
-  BimManager.loadEnvironment('nyc.js', scene);
+  BimManager.loadEnvironment('senaatintori.js', scene);
 
   toggleParent = Menu.createMenuToggle(dolly);
 
@@ -89,7 +89,8 @@ const setClickListeners = () => {
         BimManager.toggleMaterial(menu);
       }
     } else if (teleportOn && !onMenu && teleporter) {
-      dolly.position.set(teleporter.position.x, teleporter.position.y, teleporter.position.z);
+      moveDollyTo(dolly, {x: teleporter.position.x, y: teleporter.position.y, z: teleporter.position.z}, 500);
+
     }
   };
   window.addEventListener('mousedown', onClickEvent, false);
@@ -125,6 +126,7 @@ const getIntersectedObj = () => {
 
 let tween = null;
 const moveDollyTo = (dolly, pos, time) => {
+  console.log('Going to: '+pos.x+','+pos.y+','+pos.z);
   const tweenPos = {x: dolly.position.x, y: dolly.position.y, z: dolly.position.z};
   if (tween) {
     tween.stop();
@@ -170,29 +172,29 @@ const checkKeyboard = () => {
   const ubounds = new THREE.Vector3(1000, 200, 1000);
 
 
-  if (keyboard.pressed('W')) {
+  if (keyboard.pressed('W') || keyboard.pressed('up')) {
     //alignDollyTo(camera.getWorldDirection());
     dolly.translateZ(-hstep);
   }
 
-  if (keyboard.pressed('S')) {
+  if (keyboard.pressed('S') || keyboard.pressed('down')) {
     //alignDollyTo(camera.getWorldDirection());
     dolly.translateZ(hstep);
   }
 
-  if (keyboard.pressed('A')) {
+  if (keyboard.pressed('A') || keyboard.pressed('left')) {
     dolly.rotateY(rot);
   }
 
-  if (keyboard.pressed('D')) {
+  if (keyboard.pressed('D') || keyboard.pressed('right')) {
     dolly.rotateY(-rot);
   }
 
-  if (keyboard.pressed('R')) {
+  if (keyboard.pressed('R') || keyboard.pressed('.')) {
     dolly.translateY(vstep);
 
   }
-  if (keyboard.pressed('F')) {
+  if (keyboard.pressed('F') || keyboard.pressed(',')) {
     dolly.translateY(-vstep);
   }
 
