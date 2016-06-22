@@ -109,13 +109,7 @@ const clickHandler = (event) => {
     const menu = getIntersectedMenu();
     if (menu) {
       if (menu.name == 'MenuToggle') {
-        if (menuParent) {
-          Menu.hideMenu(dolly);
-          menuParent = null;
-        } else {
-          menuParent = Menu.createMenu(dolly, camera, BimManager.getMaterials());
-        }
-        toggleNavigation();
+        toggleMenu();
       } else {
         BimManager.toggleMaterial(menu);
       }
@@ -125,8 +119,20 @@ const clickHandler = (event) => {
     }
 }
 
+
+const toggleMenu = () => {
+  if (menuParent) {
+      Menu.hideMenu(dolly);
+      menuParent = null;
+  } else {
+    menuParent = Menu.createMenu(dolly, camera, BimManager.getMaterials());
+  }
+  toggleNavigation();
+}
+
 var lastRender = 0;
 const animate = (timestamp) => {
+
   requestAnimationFrame(animate);
   lastRender = timestamp;
   controls.update();
@@ -249,7 +255,7 @@ const checkKeyboard = () => {
     dolly.position.y -= vstep;
   }
   if (keyboard.pressed('space')) {
-    clickHandler(null);
+    toggleMenu();
   }
 
   dolly.position.clamp(lbounds, ubounds);
