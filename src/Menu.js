@@ -52,7 +52,7 @@ const createMenu = (dolly, camera, materials) => {
 
     menuParent.add(menuHandle);
 
-    let spritey = Text.makeTextSprite(cleanMaterialName(material.name), 48);
+    let spritey = Text.makeTextSprite(cleanMaterialName(material.name), 70);
    spritey.position.set(menuHandle.position.x, menuHandle.position.y + 0.07, menuHandle.position.z);
     textParent.add(spritey);
 
