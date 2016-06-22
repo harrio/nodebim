@@ -16,6 +16,8 @@ const raycaster  = new THREE.Raycaster();
 const scene = new THREE.Scene();
 const keyboard = new THREEx.KeyboardState();
 
+
+
 let teleportOn = true;
 let onMenu = false;
 let keyboardOn = true;
@@ -188,37 +190,54 @@ const render = () => {
   }
 };
 
+
+const lbounds = new THREE.Vector3(-1000, 0.5, -1000);
+const ubounds = new THREE.Vector3(1000, 200, 1000);
+const hspeed = 100;
+const vspeed = 100;
+const vstep = 0.3;
+const hstep = 0.3;
+const rot = 3.14/180 * 5;
+const cwd = new THREE.Vector3(0,0,0);
+const yaxis = new THREE.Vector3(0,1,0);
+
 const checkKeyboard = () => {
-  const hspeed = 100;
-  const vspeed = 100;
-  const vstep = 0.5;
-  const hstep = 0.5;
-  const rot = 3.14/180 * 5;
-  const lbounds = new THREE.Vector3(-1000, 0.5, -1000);
-  const ubounds = new THREE.Vector3(1000, 200, 1000);
-
-
-
 
   if (keyboard.pressed('W') || keyboard.pressed('up')) {
-    let cwd = camera.getWorldDirection();
+    camera.getWorldDirection(cwd);
 
     dolly.position.x += cwd.x*hstep;
     dolly.position.z += cwd.z*hstep;
   }
 
   if (keyboard.pressed('S') || keyboard.pressed('down')) {
-    let cwd = camera.getWorldDirection();
+    camera.getWorldDirection(cwd);
 
     dolly.position.x += cwd.x* (-hstep);
     dolly.position.z += cwd.z* (-hstep);
   }
 
-  if (keyboard.pressed('A') || keyboard.pressed('left')) {
+  if (keyboard.pressed('D')) {
+    camera.getWorldDirection(cwd);
+    cwd.applyAxisAngle(yaxis, Math.PI / 2);
+
+    dolly.position.x += cwd.x* (-hstep);
+    dolly.position.z += cwd.z* (-hstep);
+  }
+
+  if (keyboard.pressed('A')) {
+    camera.getWorldDirection(cwd);
+    cwd.applyAxisAngle(yaxis, Math.PI / 2);
+
+    dolly.position.x += cwd.x* hstep;
+    dolly.position.z += cwd.z* hstep;
+  }
+
+  if (keyboard.pressed('Q') || keyboard.pressed('left')) {
     dolly.rotateY(rot);
   }
 
-  if (keyboard.pressed('D') || keyboard.pressed('right')) {
+  if (keyboard.pressed('E') || keyboard.pressed('right')) {
     dolly.rotateY(-rot);
   }
 
