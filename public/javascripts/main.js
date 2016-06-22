@@ -127,7 +127,7 @@
 	  effect.setSize(window.innerWidth, window.innerHeight);
 	  VRManager = new WebVRManager(renderer, effect);
 	
-	  BimManager.loadEnvironment('helsinki.js', scene);
+	  BimManager.loadEnvironment('nyc.js', scene);
 	
 	  setResizeListeners();
 	  setClickListeners();
@@ -256,6 +256,8 @@
 	  var vstep = 0.5;
 	  var hstep = 0.5;
 	  var rot = 3.14 / 180 * 5;
+	  var lbounds = new THREE.Vector3(-1000, 0.5, -1000);
+	  var ubounds = new THREE.Vector3(1000, 200, 1000);
 	
 	  if (keyboard.pressed('W')) {
 	    //alignDollyTo(camera.getWorldDirection());
@@ -281,6 +283,8 @@
 	  if (keyboard.pressed('F')) {
 	    dolly.translateY(-vstep);
 	  }
+	
+	  dolly.position.clamp(lbounds, ubounds);
 	};
 	
 	var alignDollyTo = function alignDollyTo(vec) {
@@ -1843,7 +1847,7 @@
 	};
 	
 	var createLights = function createLights() {
-	  var hemiLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.7);
+	  var hemiLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 1.5);
 	  hemiLight.name = 'hemiLight';
 	
 	  var directionalLight = new THREE.DirectionalLight(0xffffff, 1);

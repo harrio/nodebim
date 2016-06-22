@@ -56,7 +56,7 @@ const init = () => {
   effect.setSize(window.innerWidth, window.innerHeight);
   VRManager = new WebVRManager(renderer, effect);
 
-  BimManager.loadEnvironment('helsinki.js', scene);
+  BimManager.loadEnvironment('nyc.js', scene);
 
 
   setResizeListeners();
@@ -189,6 +189,8 @@ const checkKeyboard = () => {
   const vstep = 0.5;
   const hstep = 0.5;
   const rot = 3.14/180 * 5;
+  const lbounds = new THREE.Vector3(-1000, 0.5, -1000);
+  const ubounds = new THREE.Vector3(1000, 200, 1000);
 
 
   if (keyboard.pressed('W')) {
@@ -211,10 +213,13 @@ const checkKeyboard = () => {
 
   if (keyboard.pressed('R')) {
     dolly.translateY(vstep);
+
   }
   if (keyboard.pressed('F')) {
     dolly.translateY(-vstep);
   }
+
+  dolly.position.clamp(lbounds, ubounds);
 
 }
 
