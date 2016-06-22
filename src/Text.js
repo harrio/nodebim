@@ -2,6 +2,7 @@
 
 import createGeometry from 'three-bmfont-text';
 import loadFont from 'load-bmfont';
+import assign from 'object-assign'
 
 let font, texture;
 
@@ -14,13 +15,13 @@ loader.load('fonts/DejaVu-sdf.png', (tx) => {
   console.log("Texture loaded");
   texture = tx;});
 
-const makeText = (message) => {
+const makeText = (message, renderer) => {
 
   texture.needsUpdate = true
   texture.minFilter = THREE.LinearMipMapLinearFilter
   texture.magFilter = THREE.LinearFilter
   texture.generateMipmaps = true
-
+  texture.anisotropy = renderer.getMaxAnisotropy();
 
   // create a geometry of packed bitmap glyphs,
   // word wrapped to 300px and right-aligned
@@ -28,8 +29,7 @@ const makeText = (message) => {
     width: 300,
     align: 'center',
     text: message,
-    font: font,
-    flipY: texture.flipY
+    font: font
   });
 
   // change text and other options as desired
@@ -37,24 +37,25 @@ const makeText = (message) => {
   // be used as defaults
   //geometry.update(message);
 
-  // the resulting layout has metrics and bounds
-  console.log(geometry.layout.height);
-  console.log(geometry.layout.descender);
-
-  // the texture atlas containing our glyphs
-  //var texture = THREE.ImageUtils.loadTexture('fonts/DejaVu-sdf.png');
-
   // we can use a simple ThreeJS material
-  var material = new THREE.MeshBasicMaterial({
+  // var material = new THREE.MeshBasicMaterial({
+  //   map: texture,
+  //   transparent: true,
+  //   side: THREE.DoubleSide,
+  //   color: 0xffffff
+  // });
+
+  var material = new THREE.RawShaderMaterial(createSDFShader({
     map: texture,
-    transparent: true,
     side: THREE.DoubleSide,
-    color: 0xffffff
-  });
+    transparent: true,
+    color: 'rgb(230, 230, 230)'
+  }))
+
 
   // now do something with our mesh!
   var mesh = new THREE.Mesh(geometry, material);
-  const padding = 0.1;
+
   mesh.position.set(-geometry.layout.width / 2, geometry.layout.height, 0.01);
 
   var textAnchor = new THREE.Object3D();
@@ -92,6 +93,67 @@ const makeTextSprite = (message, fontsize) => {
   return sprite;
 }
 
+const createSDFShader = (opt) => {
+  opt = opt || {}
+  var opacity = typeof opt.opacity === 'number' ? opt.opacity : 1
+  var alphaTest = typeof opt.alphaTest === 'number' ? opt.alphaTest : 0.0001
+  var precision = opt.precision || 'highp'
+  var color = opt.color
+  var map = opt.map
+
+  // remove to satisfy r73
+  delete opt.map
+  delete opt.color
+  delete opt.precision
+  delete opt.opacity
+
+  return assign({
+    uniforms: {
+      opacity: { type: 'f', value: opacity },
+      map: { type: 't', value: map || new THREE.Texture() },
+      color: { type: 'c', value: new THREE.Color(color) }
+    },
+    vertexShader: [
+      'attribute vec2 uv;',
+      'attribute vec4 position;',
+      'uniform mat4 projectionMatrix;',
+      'uniform mat4 modelViewMatrix;',
+      'varying vec2 vUv;',
+      'void main() {',
+      'vUv = uv;',
+      'gl_Position = projectionMatrix * modelViewMatrix * position;',
+      '}'
+    ].join('\n'),
+    fragmentShader: [
+      '#ifdef GL_OES_standard_derivatives',
+      '#extension GL_OES_standard_derivatives : enable',
+      '#endif',
+      'precision ' + precision + ' float;',
+      'uniform float opacity;',
+      'uniform vec3 color;',
+      'uniform sampler2D map;',
+      'varying vec2 vUv;',
+
+      'float aastep(float value) {',
+      '  #ifdef GL_OES_standard_derivatives',
+      '    float afwidth = length(vec2(dFdx(value), dFdy(value))) * 0.70710678118654757;',
+      '  #else',
+      '    float afwidth = (1.0 / 32.0) * (1.4142135623730951 / (2.0 * gl_FragCoord.w));',
+      '  #endif',
+      '  return smoothstep(0.5 - afwidth, 0.5 + afwidth, value);',
+      '}',
+
+      'void main() {',
+      '  vec4 texColor = texture2D(map, vUv);',
+      '  float alpha = aastep(texColor.a);',
+      '  gl_FragColor = vec4(color, opacity * alpha);',
+      alphaTest === 0
+        ? ''
+        : '  if (gl_FragColor.a < ' + alphaTest + ') discard;',
+      '}'
+    ].join('\n')
+  }, opt)
+}
 
 
 export {

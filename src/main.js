@@ -121,13 +121,13 @@ const clickHandler = (event) => {
 
 
 const toggleMenu = () => {
-  if (menuParent) {
+    if (menuParent) {
       Menu.hideMenu(dolly);
       menuParent = null;
-  } else {
-    menuParent = Menu.createMenu(dolly, camera, BimManager.getMaterials());
-  }
-  toggleNavigation();
+    } else {
+      menuParent = Menu.createMenu(dolly, camera, renderer, BimManager.getMaterials());
+    }
+    toggleNavigation();
 }
 
 var lastRender = 0;
