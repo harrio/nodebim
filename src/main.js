@@ -60,6 +60,13 @@ const init = () => {
   initResize();
   setClickListeners();
   requestAnimationFrame(animate);
+
+  document.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+    return false; 
+  }, false);
+
+
 };
 
 const initResize = () => {
@@ -108,6 +115,7 @@ const setClickListeners = () => {
       }
     } else if (teleportOn && !onMenu && teleporter && (VRManager.mode == 3 || event.button == 2)) {
       moveDollyTo(dolly, {x: teleporter.position.x, y: teleporter.position.y, z: teleporter.position.z}, 500);
+      event.stopPropagation();
 
     }
   };
