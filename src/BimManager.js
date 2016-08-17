@@ -1,5 +1,6 @@
 /* global THREE */
 
+import * as Cleaner from './Cleaner';
 import OBJLoader from 'three-obj-loader';
 OBJLoader(THREE);
 
@@ -29,6 +30,7 @@ const addObject = (scene, callback) => {
 const loadModelToScene = (name, scene, callback) => {
   objMaterials = {};
   oldOpacities = {}
+  Cleaner.disposeHierarchy(object);
   scene.remove(object);
   // load a resource
   loader.load(
@@ -38,14 +40,16 @@ const loadModelToScene = (name, scene, callback) => {
 }
 
 const loadEnvironment = (name, scene) => {
-  if (environment) scene.remove(environment);
-
+  if (environment) {
+    Cleaner.disposeHierarchy(environment);
+    scene.remove(environment);
+  }
   loader.load(
     name, (geometry, materials) => {
       geometry.mergeVertices();
       environment = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(geometry), new THREE.MultiMaterial( materials ) );
       environment.position.x = 0;
-      environment.position.y = 0.01;
+      environment.position.y += 0.1;
       environment.position.z = 0;
 
       scene.add(environment);
