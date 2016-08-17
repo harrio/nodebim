@@ -1,9 +1,14 @@
 /* global THREE */
 
 import * as Text from './Text';
+import * as Cleaner from './Cleaner';
 
 const yaxis = new THREE.Vector3(0, 1, 0);
 const zaxis = new THREE.Vector3(0, 0, 1);
+
+const radius = 1;
+const mpi = Math.PI / 180;
+const startAngle = 135 * mpi;
 
 let menuParent, textParent, menuToggle, toggleParent;
 
@@ -38,18 +43,22 @@ const createMenu = (dolly, camera, renderer, materials) => {
   textParent = new THREE.Object3D();
   let x = 0;
   let y = 0;
+
+  let angle = startAngle;
+
   for (let key in materials) {
     let material = materials[key];
     const geometry = new THREE.PlaneGeometry(0.1, 0.1);
 
     const menuHandle = new THREE.Mesh(geometry, material);
     menuHandle.name = key;
-    menuHandle.rotation.x = Math.PI / 180 * -20;
+    //menuHandle.rotation.x = Math.PI / 180 * -20;
 
-    menuHandle.position.x = 0.35 * x - 0.5;
+    menuHandle.position.x = Math.sin(angle) * radius; //0.35 * x - 0.5;
     menuHandle.position.y = 0.3 * y + 1;
-    menuHandle.position.z = -1;
+    menuHandle.position.z = Math.cos(angle) * radius; //-1;
 
+    menuHandle.lookAt(camera.position);
     menuParent.add(menuHandle);
 
     //textParent.scale.multiplyScalar(0.005);
@@ -58,12 +67,14 @@ const createMenu = (dolly, camera, renderer, materials) => {
     //spritey.position.set(-5, 2, 0);
     spritey.scale.multiplyScalar(-0.0018);
     //dolly.parent.add(spritey);
+
     menuHandle.add(spritey);
     //spritey.rotation.y =
     //textParent.add(spritey);
-    console.log(spritey.position);
     x = x < 4 ? x + 1 : 0;
     y = x == 0 ? y + 1 : y;
+
+    angle = x < 4 ? angle + 20 * mpi : startAngle;
   }
 
   dolly.add(menuParent);
@@ -74,6 +85,8 @@ const createMenu = (dolly, camera, renderer, materials) => {
 }
 
 const hideMenu = (dolly) => {
+  Cleaner.disposeHierarchy(menuParent);
+  Cleaner.disposeHierarchy(textParent);
   dolly.remove(menuParent);
   dolly.remove(textParent);
 }
