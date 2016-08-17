@@ -7,6 +7,7 @@ import * as Navigator from './Navigator';
 import * as Teleporter from './Teleporter';
 import * as Menu from './Menu';
 import * as WorldManager from './WorldManager';
+import * as Cleaner from './Cleaner';
 
 
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 10000);
@@ -265,6 +266,7 @@ const checkKeyboard = () => {
 
 const toggleNavigation = () => {
   if (teleportOn) {
+    Cleaner.disposeHierarchy(teleporter);
     scene.remove(teleporter);
     teleporter = null;
   }
